@@ -7,8 +7,8 @@ import Extractors::LinesOfCodeExtractor;
 import Analyzers::VolumeAnalyzer;
 import lang::java::jdt::m3::Core;
 
-public void run() {
-	M3 model = createM3FromEclipseProject(|project://JabberPoint|);
+public void run(loc project) {
+	M3 model = createM3FromEclipseProject(project);
 	
 	set[LineCounts] volume = extractLinesOfCode(model);
 	
