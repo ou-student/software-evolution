@@ -20,7 +20,7 @@ private LineCounts calculate(loc file) {
 	int totalCount = size(lines);
 	int blankLineCount = size(blankLines);
 	int commentLineCount = size(commentLines.comment);
-	int codeLineCount = totalCount - blankLineCount - commentLineCount + size(commentLines.blank); 
+	int codeLineCount = totalCount - blankLineCount - commentLineCount;
 	
 	return <file, codeLineCount, commentLineCount, blankLineCount, totalCount>;
 }
