@@ -10,9 +10,9 @@ import lang::java::jdt::m3::Core;
 public void run(loc project) {
 	M3 model = createM3FromEclipseProject(project);
 	
-	set[LineCounts] volume = extractLinesOfCode(model);
+	set[LineCounts] lineCounts = { extractLinesOfCode(f) | f <- files(model) };
 	
-	for (x <- volume) {
+	for (x <- lineCounts) {
 		println("<x.location>:");
 		println("- Code: \t<x.code>");
 		println("- Comment:\t<x.comment>");
@@ -21,5 +21,5 @@ public void run(loc project) {
 		println();
 	}
 	
-	println("Calculated volume ranking: <analyzeVolume(volume)>");
+	println("Calculated volume ranking: <analyzeVolume(lineCounts)>");
 }

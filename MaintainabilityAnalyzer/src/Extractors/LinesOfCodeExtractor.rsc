@@ -8,79 +8,77 @@ import Set;
 import String;
 import DataTypes;
 
-public set[LineCounts] extractLinesOfCode(M3 model) {
-	return { calculate(f) | f <- files(model) };
+/**
+ * Extracts the lines of code represented as LineCounts from the specified source location.
+ * @param source The location of the file to extract the LineCounts for.
+ * @return LineCounts A LineCounts instance representing the LineCounts for the source.
+ */
+public LineCounts extractLinesOfCode(loc source) {
+	return calculateLineCounts(source);
 }
 
-private LineCounts calculate(loc file) {
-	list[str] lines = readFileLines(file);
-	set[int] blankLines = countBlankLines(lines);
-	tuple[set[int] comment, set[int] blank] commentLines = countCommentLines(file, lines, toList(blankLines));
-	
-	int totalCount = size(lines);
-	int blankLineCount = size(blankLines);
-	int commentLineCount = size(commentLines.comment);
-	int codeLineCount = totalCount - blankLineCount - commentLineCount;
-	
-	return <file, codeLineCount, commentLineCount, blankLineCount, totalCount>;
-}
+/**
+ * Counts the number of blank lins in the specified list.
+ * @param lines The list of type str that contains the source code lines.
+ * @return An int representing the number of blank lines.
+ */
+private int countBlankLines(list[str] lines) = size([x | x <- lines, trim(x) == ""]);
 
-private set[int] countBlankLines(list[str] lines) {
-	set[int] blankLineIndices = {};
-	int index = 0;
-	int count = size(lines);
+/**
+ * Calculates the line counts for the specified file.
+ * @param file The location of the file to calculate the LineCounts for.
+ * @return A LineCounts instance containing the result of the calculation.
+ */
+private LineCounts calculateLineCounts(loc file) {
+	M3 model = createM3FromFile(file);
+	str source = readFile(file);
+	list[str] lines = split("\n", source);	
+	int total = size(lines);
+	int blank = countBlankLines(lines);
+	int code = 0;
+	int comment = 0;
 	
-	while (index < count) {
-		str trimmed = trim(lines[index]);
-		
-		if (size(trimmed) == 0) {
-			blankLineIndices += {index};
-		}
-		
-		index += 1;
+	// Straight forward calculation when there are no comments.
+	if (size(model.documentation) == 0) {
+		code = total - blank;
 	}
-	
-	return blankLineIndices;
-}
-
-private tuple[set[int], set[int]] countCommentLines(loc location, list[str] lines, list[int] blankLines)
-{
-	M3 model = createM3FromFile(location);
-	set[int] commentLineIndices = {};	
-	set[int] blankCommentLineIndices = {};
-	
-	if (size(model.documentation) == 0) 
-	{
-		return <commentLineIndices, blankCommentLineIndices>;
+	else {
+		code = calculateLinesOfCode(source, model);
+		comment = total - code - blank;		
 	}
-		
-	for(f <- model.documentation, unit := f.comments) 
-	{
-		list[str] commentLines = readFileLines(unit);
-				
-		int index = unit.begin.line - 1; // -1 for 0 based index.
-		int end = unit.end.line;
-		int commentIndex = 0;
-	
-		while(index < end)
-		{	
-			str commentLine = trim(commentLines[commentIndex]);
-			str codeLine = trim(lines[index]);
 			
-			if (commentLine == codeLine)
-			{			
-				commentLineIndices += { index };
-				
-				if (size(commentLine) == 0)
-				{
-					blankCommentLineIndices += { index };
-				}
-			}
-			
-			index += 1;	
-			commentIndex += 1;		
-		}				
+	return <file, code, comment, blank, total>;	
+}
+
+/**
+ * Calculates the number of lines of code.
+ * @param source The source code to count the lines of code for.
+ * @param The model that contains the source code meta data.
+ * @return An int representing the number of lines of code.
+ */
+private int calculateLinesOfCode(str source, M3 model) {
+	list[str] lines = removeComments(source, model);
+	int total = size(lines);
+	int blank = countBlankLines(lines);
+	
+	return total - blank;
+}
+
+/**
+ * Removes all comments from the specified source.
+ * @param source The source code to remove the comments from.
+ * @param model The model that contains the documentation comments.
+ * @return A list of type str that represents all code lines from the cleaned up source. 
+ */
+private list[str] removeComments(str source, M3 model) {
+	str code = source;
+	
+	for (d <- model.documentation) {
+		int offset = d.comments.offset;
+		str comment = substring(source, offset, offset + d.comments.length);
+		code = replaceFirst(code, comment, "");
 	}
 	
-	return <commentLineIndices, blankCommentLineIndices>;
+	return split("\n", code);
 }
+
