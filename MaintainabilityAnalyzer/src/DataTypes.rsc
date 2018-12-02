@@ -8,3 +8,5 @@ data Ranking =
 	| VeryHigh (num size);
 	
 alias LineCounts = tuple[loc location, int code, int comment, int blank, int total];
+
+alias Position = tuple[int line, int column];
