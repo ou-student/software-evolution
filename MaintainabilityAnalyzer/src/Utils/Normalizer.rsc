@@ -3,100 +3,12 @@ module Utils::Normalizer
 import Prelude;
 import DataTypes;
 
-alias NormalizeResult = tuple[str normalized, num blankLines, num commentlines];
-
-public NormalizeResult normalize(str input) {
-	comments = 0;
-	
-	result = removeSingleLineComments(input);
-	//println("Removed <result.lines> lines of single line comments {<result.removed>}");
-	result = removeInlineComments(result.result);
-	//println("Removed <result.lines> inline comments {<result.removed>}");
-	result = removeMultiLineComments(result.result);
-	//println("Removed <result.lines> lines of multi line comments {<result.removed>}");
-	result = removeBlankLines(result.result);
-	//println("Removed <result.lines> blank lines");
-	result = removeWhitespaces(result.result);
-	//println("Removed <result.lines> whitespaces");
-	
-	return <result.result,0,comments>;
-}
-
-private tuple[str result, num lines, list[str] removed] removeWhitespaces(str input) {
-	aantal = 0;
-
-	//// Remove whitespaces at end of line.
-	//for( /<whitespace:^\S[\s]+>\n/ := input ) {
-	//	input = replaceFirst(input, whitespace, "");
-	//	aantal += 1;
-	//}
-	
-	//// Remove whitespaces at start of line.
-	for( /(^|\n)<whitespace:[\s]+>[^\s\n]/ := input ) {
-		input = replaceFirst(input, whitespace, "");
-		aantal += 1;
-	}
-
-	return <input, aantal, []>;
-}
-
-private tuple[str result, num lines, list[str] removed] removeBlankLines(str input) {
-	nrOfBlankLines = 0;
-	
-	// Remove blank spaces between two existing lines.
-	for( /<blank:\n[\s]*\n>/ := input ) {
-		input = replaceFirst(input, blank, "\n");
-		nrOfBlankLines += 1;
-	}
-	
-	// Remove blank line if it's first line of file.
-	if( /<blank:^[\s]*\n>/ := input ) {
-		input = replaceFirst(input, blank, "");
-		nrOfBlankLines += 1;
-	}
-	
-	return <input, nrOfBlankLines, []>;
-}
-
-private tuple[str result, num lines, list[str] removed] removeSingleLineComments(str input) {
-	nrOfCommentLines = 0;
-	removed = [];
-	
-	for( /(^|\n)<comment:[\s]*\/\/.*>/ := input ) {
-		input = replaceFirst(input, comment, "");
-		nrOfCommentLines += 1;
-		removed += comment;
-	}
-	
-	return <input, nrOfCommentLines, removed>;
-}
-
-private tuple[str result, num lines, list[str] removed] removeInlineComments(str input) {
-	nrOfComments = 0;
-	removed = [];
-	
-	for( /[^\n]<comment:\/\/[^"\n]*>\n/ := input ) {
-		input = replaceFirst(input, comment, "");
-		nrOfComments += 1;
-		removed += comment;
-	}
-	
-	return <input, nrOfComments, removed>;
-}
-
-private tuple[str result, num lines, list[str] removed] removeMultiLineComments(str input) {
-	nrOfCommentLines = 0;
-	removed = [];
-	
-	for( /<comment:\/\*[\s\S]*?\*\/>/ := input ) {
-		input = replaceFirst(input, comment, "");
-		nrOfCommentLines += size(split("\n", comment));
-		removed += comment;
-	}
-	
-	return <input, nrOfCommentLines, removed>;
-}
-
+/**
+ * Normalizes the given file.
+ * Normalization removes (multiline) comments, blank lines and leading/trailing whitespaces.
+ * @param file The file that needs to be normalized.
+ * @return A LinesOfCode object that contains a list of LineOfCode objects, each representing a line of code and its location.
+ */
 LinesOfCode normalizeFile(loc file) {
 	LinesOfCode result = [];
 	str code = readFile(file);
@@ -133,6 +45,15 @@ LinesOfCode normalizeFile(loc file) {
 	return result;
 }
 
+/**
+ * Create a location based on the 'parent' location, current line number, total offset, indent colunm, and length.
+ * @param original The 'parent' location on which the new location is based.
+ * @param lineNumber The line number, relative to the parent location.
+ * @param offset The character offset, relative to the parent location.
+ * @param column The number of whitespaces before a line.
+ * @param length The length of the line of code.
+ * @return The create location object.
+ */
 private loc createSourceReference(loc original, int lineNumber, int offset, int column, int length) {
 	loc src = original;
 	src.begin.column = 0;
@@ -154,6 +75,8 @@ private loc createSourceReference(loc original, int lineNumber, int offset, int 
 
 /**
  * Removes comments that look like //, whether they are single line or inline.
+ * @param input The input str from which single line comment will be removed.
+ * @return The cleaned up line of code.
  */
 private str removeSingleLineComment(str input) {
 	if(/<comment:\/\/.*>/ := input) input = replaceFirst(input, comment, "");
@@ -170,6 +93,8 @@ private str removeSingleLineComment(str input) {
  *     when the multiline comment has not ended in this line, it sets the isMultiline to 'true' so
  *     the parser knows that the next line is part of a multiline comment.
  * If the multiline comment start is not found, it returns the input string.
+ * @param input The input str from which multiline comment will be removed.
+ * @return A tuple which consists of the cleaned up line of code and a boolean that is true when the comment did not end yet.
  */
 private tuple[str line, bool isMultiline] removeMultiLineCommentStart(str input) {
 	isMultiline = false;
@@ -186,6 +111,8 @@ private tuple[str line, bool isMultiline] removeMultiLineCommentStart(str input)
  * Tries to find the end of a multiline comment.
  * If the multiline comment end is found, it replaces everything up and until the comment end with "".
  * If the multiline comment end is not found, it assumes the line is comment and replaces it with "".
+ * @param input The input str from which multiline comment end will be removed.
+ * @return A tuple which consists of the cleaned up line of code and a boolean that is true when the comment did not end yet.
  */
 private tuple[str line, bool isMultiline] removeMultiLineCommentEnd(str input) {
 	isMultiline = true;
@@ -200,4 +127,105 @@ private tuple[str line, bool isMultiline] removeMultiLineCommentEnd(str input) {
 	return <input, isMultiline>;
 }
 
+
+
+
+///////////////////////////////////////////
+// TRYOUT CODE ////////////////////////////
+///////////////////////////////////////////
+
+
+//alias NormalizeResult = tuple[str normalized, num blankLines, num commentlines];
+//
+//public NormalizeResult normalize(str input) {
+//	comments = 0;
+//	
+//	result = removeSingleLineComments(input);
+//	//println("Removed <result.lines> lines of single line comments {<result.removed>}");
+//	result = removeInlineComments(result.result);
+//	//println("Removed <result.lines> inline comments {<result.removed>}");
+//	result = removeMultiLineComments(result.result);
+//	//println("Removed <result.lines> lines of multi line comments {<result.removed>}");
+//	result = removeBlankLines(result.result);
+//	//println("Removed <result.lines> blank lines");
+//	result = removeWhitespaces(result.result);
+//	//println("Removed <result.lines> whitespaces");
+//	
+//	return <result.result,0,comments>;
+//}
+//
+//private tuple[str result, num lines, list[str] removed] removeWhitespaces(str input) {
+//	aantal = 0;
+//
+//	//// Remove whitespaces at end of line.
+//	//for( /<whitespace:^\S[\s]+>\n/ := input ) {
+//	//	input = replaceFirst(input, whitespace, "");
+//	//	aantal += 1;
+//	//}
+//	
+//	//// Remove whitespaces at start of line.
+//	for( /(^|\n)<whitespace:[\s]+>[^\s\n]/ := input ) {
+//		input = replaceFirst(input, whitespace, "");
+//		aantal += 1;
+//	}
+//
+//	return <input, aantal, []>;
+//}
+//
+//private tuple[str result, num lines, list[str] removed] removeBlankLines(str input) {
+//	nrOfBlankLines = 0;
+//	
+//	// Remove blank spaces between two existing lines.
+//	for( /<blank:\n[\s]*\n>/ := input ) {
+//		input = replaceFirst(input, blank, "\n");
+//		nrOfBlankLines += 1;
+//	}
+//	
+//	// Remove blank line if it's first line of file.
+//	if( /<blank:^[\s]*\n>/ := input ) {
+//		input = replaceFirst(input, blank, "");
+//		nrOfBlankLines += 1;
+//	}
+//	
+//	return <input, nrOfBlankLines, []>;
+//}
+//
+//private tuple[str result, num lines, list[str] removed] removeSingleLineComments(str input) {
+//	nrOfCommentLines = 0;
+//	removed = [];
+//	
+//	for( /(^|\n)<comment:[\s]*\/\/.*>/ := input ) {
+//		input = replaceFirst(input, comment, "");
+//		nrOfCommentLines += 1;
+//		removed += comment;
+//	}
+//	
+//	return <input, nrOfCommentLines, removed>;
+//}
+//
+//private tuple[str result, num lines, list[str] removed] removeInlineComments(str input) {
+//	nrOfComments = 0;
+//	removed = [];
+//	
+//	for( /[^\n]<comment:\/\/[^"\n]*>\n/ := input ) {
+//		input = replaceFirst(input, comment, "");
+//		nrOfComments += 1;
+//		removed += comment;
+//	}
+//	
+//	return <input, nrOfComments, removed>;
+//}
+//
+//private tuple[str result, num lines, list[str] removed] removeMultiLineComments(str input) {
+//	nrOfCommentLines = 0;
+//	removed = [];
+//	
+//	for( /<comment:\/\*[\s\S]*?\*\/>/ := input ) {
+//		input = replaceFirst(input, comment, "");
+//		nrOfCommentLines += size(split("\n", comment));
+//		removed += comment;
+//	}
+//	
+//	return <input, nrOfCommentLines, removed>;
+//}
 

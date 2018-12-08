@@ -31,7 +31,7 @@ test bool extractLinesOfCode_Correctly_Calculates_Code_Lines() {
 	loc source = |project://JabberPoint/src/AboutBox.java|; 
 	LineCounts actual = extractLinesOfCode(source);
 
-	return actual.code == 18;
+	return actual.code == 19;
 }
 
 test bool extractLinesOfCode_Correctly_Calculates_Total_Lines() {
