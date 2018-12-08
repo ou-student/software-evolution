@@ -9,4 +9,8 @@ data Ranking =
 	
 alias LineCounts = tuple[loc location, int code, int comment, int blank, int total];
 
+
+alias LineOfCode = tuple[str line, loc location];
+alias LinesOfCode = list[LineOfCode];
+
 alias Position = tuple[int line, int column];
