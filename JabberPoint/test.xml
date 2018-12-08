@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<!DOCTYPE presentation SYSTEM "jabberpoint.dtd">
+<presentation>
+<head><title>Demo Presentation for Jabberpoint</title></head>
+<slide>
+<title>JabberPoint Demo</title>
+<items>
+<text level="1">Welkom bij Jabberpoint</text>
+<text level="2">Copyright (c) 1996-2000 Ian Darwin</text>
+<text level="2">Herschreven door</text>
+<text level="2">Gert Florijn, Mark van Elswijk, Marc Evers</text>
+<text level="2">en Sylvia Stuurman</text>
+<text level="1">Navigatie:</text>
+<text level="2">Volgende slide: PgDn or Enter</text>
+<text level="2">Vorige slide: PgUp or up-arrow</text>
+<text level="2">Stoppen: q or Q</text>
+</items>
+</slide>
+<slide>
+<title>Een bijna lege slide</title>
+<items>
+
+<text level="1"> </text>
+</items>
+</slide>
+<slide>
+<title>Achtergrond</title>
+<items>
+<text level="1">Jabberpoint is een oefening voor de</text>
+<text level="1">cursus Design patterns van de Open universiteit</text>
+<text level="1"> </text>
+<image level="2">logo-woordmerk_ou.gif</image>
+<text level="1"> </text>
+<text level="1">De oefening is ontwikeld door het SERC</text>
+<text level="1">in samenwerking met de Open universiteit </text>
+<text level="1"> </text>
+<image level="2">serclogo_fc.jpg</image>
+</items>
+</slide>
+<slide>
+<title>JabberPoint: Levels en stijlen</title>
+<items>
+<text level="1">Level 1</text>
+<text level="2">Level 2</text>
+<text level="1">A Jabberful Point</text>
+<text level="2">Level 2 heeft stijl 2</text>
+<text level="3">Zo ziet de stijl van level 3 er uit</text>
+<text level="4">En dit is level 4</text>
+</items>
+</slide>
+<slide>
+<title>Laatste slide</title>
+<items>
+<text level="1">Navigatie kan ook via het menu</text>
+<text level="2">Presentatie laden: File->Open</text>
+<text level="1"> </text>
+<text level="1">Dit is het einde van de presentatie.</text>
+<image level="1">JabberPoint.jpg</image>
+<text level="1">Tot ziens.</text>
+</items>
+</slide>
+</presentation>

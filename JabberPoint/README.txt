@@ -1,0 +1,1 @@
+Het is in veel gevallen niet nodig om xerces.jar en jdom.jar expliciet aan een project toe te voegen.
