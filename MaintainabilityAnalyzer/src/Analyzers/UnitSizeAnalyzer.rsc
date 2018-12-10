@@ -71,6 +71,15 @@ private RiskEvaluation evaluateRisk(set[LineCounts] facts) {
 }
 
 /**
+ * Evaluates the specified treshold value for the specified risk category in the specified risk evaluation.
+ * @param category The RiskCategory to evaluate the treshold for.
+ * @param evaluation The RiskEvaluation that contains the risk evaluation data.
+ * @param treshold The treshold value to evaluate.
+ * @return True if the specified treshold value is met within the risk evaluation for the specified category, false otherwise.
+ **/
+private bool evaluateTreshold(RiskCategory category, RiskEvaluation evaluation, int treshold) = (category notin evaluation) || (category in evaluation && evaluation[category].percentage <= treshold);
+
+/**
  * Determines whether the specified risk evaluation contains values that fall within the treshold associated with the specified rank.
  * @param rank The rank to assess the treshold values for.
  * @param evaluation The risk evaluation data.
@@ -79,12 +88,10 @@ private RiskEvaluation evaluateRisk(set[LineCounts] facts) {
 private bool withinTresholds(Rank rank, RiskEvaluation evaluation) {
 	MetricTresholds treshold = tresholds[rank];
 	
-	// One would think that !p || (p && q) <=> !p || q however when using the latter form Rascal will 
-	// still evaluate q which will cause an exception because the key in the map could not be found.
-	return
-		(RiskCategories.veryHigh notin evaluation || (RiskCategories.veryHigh in evaluation && evaluation[RiskCategories.veryHigh].percentage <= treshold.veryHigh)) &&
-		(RiskCategories.high notin evaluation || (RiskCategories.high in evaluation && evaluation[RiskCategories.high].percentage <= treshold.high)) &&
-		(RiskCategories.moderate notin evaluation || (RiskCategories.moderate in evaluation && evaluation[RiskCategories.moderate].percentage <= treshold.moderate));
+	return 
+		evaluateTreshold(RiskCategories.veryHigh, evaluation, treshold.veryHigh) &&
+		evaluateTreshold(RiskCategories.high, evaluation, treshold.high) &&
+		evaluateTreshold(RiskCategories.moderate, evaluation, treshold.moderate);
 }
 
 /**
