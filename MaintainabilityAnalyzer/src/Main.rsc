@@ -5,6 +5,7 @@ import IO;
 import Set;
 import Extractors::LinesOfCodeExtractor;
 import Analyzers::VolumeAnalyzer;
+import Analyzers::UnitSizeAnalyzer;
 import lang::java::jdt::m3::Core;
 
 public void run(loc project) {
@@ -22,4 +23,6 @@ public void run(loc project) {
 	}
 	
 	println("Calculated volume ranking: <analyzeVolume(lineCounts)>");
+	
+	
 }
