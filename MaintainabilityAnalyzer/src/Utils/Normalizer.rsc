@@ -86,7 +86,6 @@ private loc createSourceReference(loc original, int lineNumber, int offset, int 
 	return src;	
 }
 
-
 /**
  * Removes comments that look like //, whether they are single line or inline.
  * @param input The input str from which single line comment will be removed.
@@ -95,14 +94,7 @@ private loc createSourceReference(loc original, int lineNumber, int offset, int 
 private str removeSingleLineComment(str input) {
 	if(/<comment:\/\/.*>/ := input) input = replaceFirst(input, comment, "");
 	return input;
-	//res = visit(input) {
-	//	case /<comment:\/\/.*>/ => ""
-	//	};
-	//return res;
 }
-
-//alias MultiLineResult = tuple[str line, bool isMultiline];
-
 
 /**
  * Tries to find the start of a multiline comment.
@@ -128,24 +120,7 @@ private tuple[str line, bool isMultiline] removeMultiLineCommentStart(str input)
 	}
 	
 	return <input, isMultiline>;
-	
-	
-	//isMultiline = false;
-	//
-	//res = visit(input) {
-	//	case /<comment:\/\*[\s\S]*\*\/>/: {
-	//		input = replaceFirst(input, comment, "");
-	//		isMultiline = false;
-	//	}
-	//	case /<comment:\/\*[\s\S]*>/: {
-	//		input = replaceFirst(input, comment, "");
-	//		isMultiline = true;
-	//	}
-	//};
-	//
-	//return <input, isMultiline>;
 }
-
 
 /**
  * Tries to find the end of a multiline comment.
@@ -174,6 +149,37 @@ private tuple[str line, bool isMultiline] removeMultiLineCommentEnd(str input) {
 ///////////////////////////////////////////
 // TRYOUT CODE ////////////////////////////
 ///////////////////////////////////////////
+
+
+/**
+ * Using visit method... works but slower, because match is expected once.
+ */
+//private str removeSingleLineComment(str input) {
+//	res = visit(input) {
+//		case /<comment:\/\/.*>/ => ""
+//		};
+//	return res;
+//}
+
+/**
+ * Using visit method... works but slower, because match is expected once.
+ */
+//private tuple[str line, bool isMultiline] removeMultiLineCommentStart(str input) {
+//	isMultiline = false;
+//	
+//	res = visit(input) {
+//		case /<comment:\/\*[\s\S]*\*\/>/: {
+//			input = replaceFirst(input, comment, "");
+//			isMultiline = false;
+//		}
+//		case /<comment:\/\*[\s\S]*>/: {
+//			input = replaceFirst(input, comment, "");
+//			isMultiline = true;
+//		}
+//	};
+//	
+//	return <input, isMultiline>;
+//}
 
 
 //alias NormalizeResult = tuple[str normalized, num blankLines, num commentlines];

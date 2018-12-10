@@ -33,7 +33,6 @@ public void run(loc project) {
 		if(isMethod(x.name) && !isAnonymous(x.name)) {
 			// Normalize file
 			linesOfCode = normalizeFile(x.src);
-			totalLoc2 += size(linesOfCode);
 			
 			// Extract duplicates
 			duplicates = extractDuplications(linesOfCode, duplicates, 6);
