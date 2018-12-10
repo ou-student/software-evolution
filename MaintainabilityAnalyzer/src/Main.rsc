@@ -12,6 +12,7 @@ import String;
 import List;
 import DateTime;
 import Utils::Normalizer;
+import Utils::CoreExtension;
 
 public void run(loc project) {
 	// Create new model from project file.
@@ -27,21 +28,14 @@ public void run(loc project) {
 	for(x <- model.declarations) {
 		// If file:
 		if(isCompilationUnit(x.name)) {
-			lineCount = extractLinesOfCode(x.src);
-			lineCounts += lineCount;
 			linesOfCode = normalizeFile(x.src);
 			unitLoc = size(linesOfCode);
 			totalLoc += unitLoc;
-			
-			println("<lineCount.location>:");
-			println("- Code: \t<lineCount.code>");
-			println("<x.src>");
-			println("- Code: \t<unitLoc>");
-			println();
+			println(x.src);
 		}
 		
 		// If method:
-		if(isMethod(x.name)) {
+		if(isMethod(x.name) && !isAnonymous(x.name)) {
 			// Normalize file
 			linesOfCode = normalizeFile(x.src);
 			totalLoc2 += size(linesOfCode);
