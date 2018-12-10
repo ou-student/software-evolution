@@ -8,7 +8,8 @@ import Relation;
 import Set;
 
 /**
- * Map that contains the metric tresholds associated to a specified rank.
+ * Map that contains the metric tresholds associated to a specified rank. 
+ * Tresholds are obtained from 'A Practical Model for Measuring Maintainability'
  **/
 private map[Rank rank, MetricTresholds tresholds] tresholds = (
 	Rankings.veryHigh:<25,0,0>,
@@ -69,7 +70,6 @@ private RiskEvaluation evaluateRisk(set[LineCounts] facts) {
 	return ( x:<size(y), z, calculatePercentage(z, totalLinesOfCode)> | x <- domain(unitSizes), y := unitSizes[x], z := sumCode(y) );
 }
 
-
 /**
  * Determines whether the specified risk evaluation contains values that fall within the treshold associated with the specified rank.
  * @param rank The rank to assess the treshold values for.
@@ -79,10 +79,12 @@ private RiskEvaluation evaluateRisk(set[LineCounts] facts) {
 private bool withinTresholds(Rank rank, RiskEvaluation evaluation) {
 	MetricTresholds treshold = tresholds[rank];
 	
-	return 
-		evaluation[RiskCategories.veryHigh].percentage <= treshold.veryHigh &&
-		evaluation[RiskCategories.high].percentage <= treshold.high &&
-		evaluation[RiskCategories.moderate].percentage <= treshold.moderate;
+	// One would think that !p || (p && q) <=> !p || q however when using the latter form Rascal will 
+	// still evaluate q which will cause an exception because the key in the map could not be found.
+	return
+		(RiskCategories.veryHigh notin evaluation || (RiskCategories.veryHigh in evaluation && evaluation[RiskCategories.veryHigh].percentage <= treshold.veryHigh)) &&
+		(RiskCategories.high notin evaluation || (RiskCategories.high in evaluation && evaluation[RiskCategories.high].percentage <= treshold.high)) &&
+		(RiskCategories.moderate notin evaluation || (RiskCategories.moderate in evaluation && evaluation[RiskCategories.moderate].percentage <= treshold.moderate));
 }
 
 /**
