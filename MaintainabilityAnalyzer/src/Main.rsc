@@ -21,17 +21,12 @@ public void run(loc project) {
 	// Instantiate required objects
 	Duplications duplicates = ();
 	set[LineCounts] lineCounts = {};
-	totalLoc = 0;
-	totalLoc2 = 0;
 
 	// run metrics on compilation units and methods.
 	for(x <- model.declarations) {
 		// If file:
 		if(isCompilationUnit(x.name)) {
-			linesOfCode = normalizeFile(x.src);
-			unitLoc = size(linesOfCode);
-			totalLoc += unitLoc;
-			println(x.src);
+			lineCounts += extractLinesOfCode(x.src);
 		}
 		
 		// If method:
@@ -44,24 +39,6 @@ public void run(loc project) {
 			duplicates = extractDuplications(linesOfCode, duplicates, 6);
 		}
 	}
-	
-	
-	//totalLOC = sum(LOCPerFile.LOC);
-	//print(totalLOC);
-	
-	set[LineCounts] lineCounts2 = { extractLinesOfCode(f) | f <- files(model) };
-	
-	//for (x <- lineCounts) {
-	//	println("<x.location>:");
-	//	println("- Code: \t<x.code>");
-	//	println("- Comment:\t<x.comment>");
-	//	println("- Blank:\t<x.blank>");
-	//	println("- Total:\t<x.total>");
-	//	println();
-	//}
-	
-	println("Total LOC(cu): <totalLoc>");
-	println("Total LOC(m) : <totalLoc2>");
+
 	println("Calculated volume ranking: <analyzeVolume(lineCounts)>");
-	println("Calculated volume ranking: <analyzeVolume(lineCounts2)>");
 }
