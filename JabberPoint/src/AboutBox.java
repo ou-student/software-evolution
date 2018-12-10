@@ -14,7 +14,7 @@ public class AboutBox {
   /**
    * Dit is ook commentaar
    */
-  private int test;
+  private int test /* TEST */ /* TEST */ ;
 	
   public static void show(Frame parent) {
     JOptionPane.showMessageDialog(parent,
@@ -29,6 +29,7 @@ public class AboutBox {
 	"About JabberPoint",
 	JOptionPane.INFORMATION_MESSAGE
 	/* new ImageIcon(myImage) */
-	);
+	); /** Wat is dit voor 
+	raar commentaar */ int hoi;
   }
 }
