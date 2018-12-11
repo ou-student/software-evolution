@@ -42,11 +42,14 @@ public void run(loc project) {
 	
 	VolumeAnalysisResult volumeAnalysisResult = analyzeVolume(lineCounts);
 	
-	println("Calculated volume ranking: <volumeAnalysisResult.ranking.rank> (<volumeAnalysisResult.ranking.label>)");
+	println("VOLUME RANKING");
+	println();
 	println("Total <volumeAnalysisResult.totalLinesOfCode> lines of which:");
 	println("<volumeAnalysisResult.codeLines> lines of code");
 	println("<volumeAnalysisResult.commentLines> comment lines");
 	println("<volumeAnalysisResult.blankLines> blank lines");
+	println();
+	println("Calculated volume ranking: <volumeAnalysisResult.ranking.rank> (<volumeAnalysisResult.ranking.label>)");
 	
 	
 }

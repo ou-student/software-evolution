@@ -10,10 +10,10 @@ public VolumeAnalysisResult analyzeVolume(set[LineCounts] facts)
 	if(size(facts) == 0) return <Rankings.veryHigh,0,0,0,0,facts>;
 	
 	int codeLines = sum([ x.code | x <- facts ]);
-	num totalKLoc = codeLines / 1000;
 	int commentLines = sum([ x.comment | x <- facts ]);
 	int blankLines = sum([ x.blank | x <- facts ]);
 	int totalLines = sum([ x.total | x <- facts ]);
+	num totalKLoc = codeLines / 1000;	
 	Rank ranking = Rankings.veryLow; // Pessimistic default.
 	
 	if (totalKLoc < 66) 
@@ -33,5 +33,5 @@ public VolumeAnalysisResult analyzeVolume(set[LineCounts] facts)
 		ranking = Rankings.low;
 	}
 	
-	return <ranking, totalLines, codeLines, blankLines, commentLines, facts>;	
+	return <ranking, totalLines, codeLines, blankLines, commentLines, facts>;
 }
