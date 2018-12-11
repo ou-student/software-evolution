@@ -73,6 +73,6 @@ private void printRiskCategory(RiskCategory riskCategory, RiskEvaluation evaluat
 	if (riskCategory in evaluation) {
 		RiskValues values = evaluation[riskCategory];
 		
-		println("<left(riskCategory.risk + "(" + riskCategory.category + ")", 30)>\t <values.percentage> % (totalling <values.linesOfCode> lines of code)");
+		println("<left(riskCategory.risk + " (" + riskCategory.category + ")", 30)>\t <values.percentage> % (totalling <values.linesOfCode> lines of code)");
 	}
 }
