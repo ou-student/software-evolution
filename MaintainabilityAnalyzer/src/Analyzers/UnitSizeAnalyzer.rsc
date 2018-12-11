@@ -22,9 +22,9 @@ private map[Rank rank, MetricTresholds tresholds] tresholds = (
  * @param facts The set of LineCounts to analyze.
  * @return A tuple of type Rank and RiskEvaluation containing the analysis results.
  **/
-public tuple[Rank ranking, RiskEvaluation risk] analyzeUnitSize(set[LineCounts] facts) {
+public UnitSizeAnalysisResult analyzeUnitSize(UnitSizes facts) {
 	RiskEvaluation riskEvaluation = evaluateRisk(facts);
-	Rank rank = Rankings.veryLow;
+	Rank rank = Rankings.veryLow;	
 	
 	if (withinTresholds(Rankings.veryHigh, riskEvaluation)) {
 		rank = Rankings.veryHigh;
@@ -39,7 +39,7 @@ public tuple[Rank ranking, RiskEvaluation risk] analyzeUnitSize(set[LineCounts] 
 		rank = Rankings.low;
 	}
 	
-	return <rank, riskEvaluation>;
+	return <rank, riskEvaluation, size(facts)>;
 }
 
 /**
@@ -47,7 +47,7 @@ public tuple[Rank ranking, RiskEvaluation risk] analyzeUnitSize(set[LineCounts] 
  * @param counts The set that contains the LineCounts to sum the number of lines of code for.
  * @return An int representing the sum of the number of lines of code.
  **/
-private int sumCode(set[LineCounts] counts) = sum([ c.code | c <- toList(counts) ]);
+private int sumCode(UnitSizes sizes) = sum([ c.size | c <- toList(sizes) ]);
 
 /**
  * Calculates the percentage of the total for the specified values.
@@ -62,9 +62,9 @@ private num calculatePercentage(num linesOfCode, num total) = (0.00 + linesOfCod
  * @param facts The set of LineCounts to evaluate the risk for.
  * @return A RiskEvaluation representing the risk evaluation results.
  **/
-private RiskEvaluation evaluateRisk(set[LineCounts] facts) {
+private RiskEvaluation evaluateRisk(UnitSizes facts) {
 	num totalLinesOfCode = sumCode(facts);
-	rel[RiskCategory category, LineCounts counts] unitSizes = { <determineRisk(x.code), x> | x <- facts };
+	rel[RiskCategory category, UnitSizeInfo sizes] unitSizes = { <determineRisk(x.size), x> | x <- facts };
 	
 	return ( x:<size(y), z, calculatePercentage(z, totalLinesOfCode)> | x <- domain(unitSizes), y := unitSizes[x], z := sumCode(y) );
 }
@@ -76,7 +76,7 @@ private RiskEvaluation evaluateRisk(set[LineCounts] facts) {
  * @param treshold The treshold value to evaluate.
  * @return True if the specified treshold value is met within the risk evaluation for the specified category, false otherwise.
  **/
-private bool evaluateTreshold(RiskCategory category, RiskEvaluation evaluation, int treshold) = (category notin evaluation) || (category in evaluation && evaluation[category].percentage <= treshold);
+private bool evaluateTreshold(RiskCategory category, RiskEvaluation evaluation, num treshold) = (category notin evaluation) || (category in evaluation && evaluation[category].percentage <= treshold);
 
 /**
  * Determines whether the specified risk evaluation contains values that fall within the treshold associated with the specified rank.

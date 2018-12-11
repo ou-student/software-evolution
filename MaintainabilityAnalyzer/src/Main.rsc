@@ -6,6 +6,7 @@ import Map;
 import Set;
 import Extractors::LinesOfCodeExtractor;
 import Extractors::DuplicationExtractor;
+import Extractors::UnitSizeExtractor;
 import Analyzers::VolumeAnalyzer;
 import Analyzers::UnitSizeAnalyzer;
 import lang::java::jdt::m3::Core;
@@ -50,6 +51,28 @@ public void run(loc project) {
 	println("<volumeAnalysisResult.blankLines> blank lines");
 	println();
 	println("Calculated volume ranking: <volumeAnalysisResult.ranking.rank> (<volumeAnalysisResult.ranking.label>)");
+	println(left("", 80, "-"));
+	UnitSizes unitSizes = extractUnitSizes(methods(model));
+	UnitSizeAnalysisResult unitSizeAnalysisResult = analyzeUnitSize(unitSizes); 
+	RiskEvaluation unitSizeRisk = unitSizeAnalysisResult.risk;
 	
+	println("UNIT SIZE RANKING");
+	println();
+	println("Total <unitSizeAnalysisResult.unitsCount> units of which:");
+	printRiskCategory(RiskCategories.veryHigh, unitSizeRisk);
+	printRiskCategory(RiskCategories.high, unitSizeRisk);
+	printRiskCategory(RiskCategories.moderate, unitSizeRisk);
+	printRiskCategory(RiskCategories.low, unitSizeRisk);	
+	println();
+	println("Calculated unit size ranking: <unitSizeAnalysisResult.ranking.rank> (<unitSizeAnalysisResult.ranking.label>)");
+	println(left("", 80, "-"));
 	
+}
+
+private void printRiskCategory(RiskCategory riskCategory, RiskEvaluation evaluation) {
+	if (riskCategory in evaluation) {
+		RiskValues values = evaluation[riskCategory];
+		
+		println("<left(riskCategory.risk + "(" + riskCategory.category + ")", 30)>\t <values.percentage> % (totalling <values.linesOfCode> lines of code)");
+	}
 }
