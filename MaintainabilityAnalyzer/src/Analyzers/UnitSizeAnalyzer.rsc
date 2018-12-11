@@ -1,7 +1,6 @@
 module Analyzers::UnitSizeAnalyzer
 
 import DataTypes;
-import IO;
 import Map;
 import List;
 import Relation;
