@@ -39,8 +39,14 @@ public void run(loc project) {
 			duplicates = extractDuplications(linesOfCode, duplicates, 6);
 		}
 	}
-
-	println("Calculated volume ranking: <analyzeVolume(lineCounts)>");
+	
+	VolumeAnalysisResult volumeAnalysisResult = analyzeVolume(lineCounts);
+	
+	println("Calculated volume ranking: <volumeAnalysisResult.ranking.rank> (<volumeAnalysisResult.ranking.label>)");
+	println("Total <volumeAnalysisResult.totalLinesOfCode> lines of which:");
+	println("<volumeAnalysisResult.codeLines> lines of code");
+	println("<volumeAnalysisResult.commentLines> comment lines");
+	println("<volumeAnalysisResult.blankLines> blank lines");
 	
 	
 }

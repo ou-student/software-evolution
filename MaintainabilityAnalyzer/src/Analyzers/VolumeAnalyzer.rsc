@@ -5,31 +5,33 @@ import DataTypes;
 import List;
 import Set;
 
-public Ranking analyzeVolume(set[LineCounts] facts)
+public VolumeAnalysisResult analyzeVolume(set[LineCounts] facts)
 {
-	if(size(facts) == 0) return VeryHigh(0);
+	if(size(facts) == 0) return <Rankings.veryHigh,0,0,0,0,facts>;
 	
-	int totalCount = sum({ x.code | x <- facts });
-	num totalKLoc = totalCount / 1000;
+	int codeLines = sum([ x.code | x <- facts ]);
+	num totalKLoc = codeLines / 1000;
+	int commentLines = sum([ x.comment | x <- facts ]);
+	int blankLines = sum([ x.blank | x <- facts ]);
+	int totalLines = sum([ x.total | x <- facts ]);
+	Rank ranking = Rankings.veryLow; // Pessimistic default.
 	
 	if (totalKLoc < 66) 
 	{
-		return VeryHigh(totalCount);
+		ranking = Rankings.veryHigh;
 	}
 	else if (totalKLoc < 246)
 	{
-		return High(totalCount);
+		ranking = Rankings.high;
 	}
 	else if (totalKLoc < 665)
 	{
-		return Moderate(totalCount);
+		ranking = Rankings.moderate;
 	}
 	else if (totalKLoc < 1310)
 	{
-		return Low(totalCount);
+		ranking = Rankings.low;
 	}
-	else
-	{
-		return VeryLow(totalCount);
-	}	
+	
+	return <ranking, totalLines, codeLines, blankLines, commentLines, facts>;	
 }

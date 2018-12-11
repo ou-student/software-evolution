@@ -1,6 +1,7 @@
 module Tests::Extractors::LinesOfCodeExtractorTests
 
 import Extractors::LinesOfCodeExtractor;
+import Utils::Normalizer;
 import lang::java::jdt::m3::Core;
 import DataTypes;
 import IO;
@@ -30,7 +31,7 @@ test bool extractLinesOfCode_Correctly_Calculates_Comment_Lines() {
 test bool extractLinesOfCode_Correctly_Calculates_Code_Lines() {	
 	LineCounts actual = extractLinesOfCode(fileSource);
 
-	return actual.code == 19;
+	return actual.code == 18;
 }
 
 test bool extractLinesOfCode_Correctly_Calculates_Total_Lines() {	 

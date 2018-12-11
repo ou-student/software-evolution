@@ -42,3 +42,5 @@ alias LineOfCode = tuple[str line, loc location];
 alias LinesOfCode = list[LineOfCode];
 
 alias Position = tuple[int line, int column];
+
+alias VolumeAnalysisResult = tuple[Rank ranking, int totalLinesOfCode, int codeLines, int blankLines, int commentLines, set[LineCounts] counts];
