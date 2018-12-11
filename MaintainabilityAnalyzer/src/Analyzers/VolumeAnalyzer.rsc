@@ -7,6 +7,8 @@ import Set;
 
 public Ranking analyzeVolume(set[LineCounts] facts)
 {
+	if(size(facts) == 0) return VeryHigh(0);
+	
 	int totalCount = sum({ x.code | x <- facts });
 	num totalKLoc = totalCount / 1000;
 	
