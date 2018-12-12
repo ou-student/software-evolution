@@ -1,19 +1,23 @@
 module DataTypes
 
-alias Rank = tuple[str rank, str label];
-alias Ranking = tuple[tuple[str rank, str label] veryHigh,
-	tuple[str rank, str label] high,
-	tuple[str rank, str label] moderate,
-	tuple[str rank, str label] low,
-	tuple[str rank, str label] veryLow];
+alias Rank = tuple[str rank, str label, int weight];
+
+alias Ranking = tuple[tuple[str rank, str label, int weight] veryHigh,
+	tuple[str rank, str label, int weight] high,
+	tuple[str rank, str label, int weight] moderate,
+	tuple[str rank, str label, int weight] low,
+	tuple[str rank, str label, int weight] veryLow];
 
 public Ranking Rankings = <
-	<"++", "Very high">,
-	<"+", "High">,
-	<"o", "Moderate">,
-	<"-", "Low">,
-	<"--", "Very low">
+	<"++", "Very high", 5>,
+	<"+", "High", 4>,
+	<"o", "Moderate", 3>,
+	<"-", "Low", 2>,
+	<"--", "Very low", 1>
 >;
+
+// Defined seperately as this is an exceptional case that should be outside of the common Rankings.  
+public Rank RankingUnknown = <"?", "Not assessed", 1>;
 
 alias RiskValues = tuple[UnitInfos units, int linesOfCode, num percentage];
 
@@ -56,7 +60,15 @@ alias DuplicationAnalysisResult = tuple[Rank ranking, int totalLinesOfCode, int 
 alias Results = tuple[VolumeAnalysisResult 		volume, 
 					  UnitSizeAnalysisResult 	unitSize, 
 					  ComplexityAnalysisResult	complexity,
-					  DuplicationAnalysisResult duplicates];
+					  DuplicationAnalysisResult duplicates,
+					  MaintainabilityScore 		score];
 					  
+
+
+public tuple[str analyzability, str changeability, str stability, str testability] MaintainabilityAspects = <"Analyzability", "Changeability", "Stability", "Testability">;
+
+alias MetricRankings = tuple[Rank volume, Rank complexity, Rank duplication, Rank unitSize, Rank testing];
+
+alias MaintainabilityScore = tuple[Rank overall,  map[str aspect, Rank rank] aspects];
 					  
 					  

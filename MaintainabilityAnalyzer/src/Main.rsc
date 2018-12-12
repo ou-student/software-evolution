@@ -12,6 +12,7 @@ import Analyzers::VolumeAnalyzer;
 import Analyzers::UnitSizeAnalyzer;
 import Analyzers::DuplicationAnalyzer;
 import Analyzers::ComplexityAnalyzer;
+import Analyzers::MaintainabilityScoreAnalyzer;
 import lang::java::jdt::m3::Core;
 import String;
 import List;
@@ -58,8 +59,9 @@ public void run(loc project) {
 	UnitSizeAnalysisResult unitSizeAnalysisResult 	    = analyzeUnitSize(unitInfos); 
 	ComplexityAnalysisResult complexityAnalysisResult   = analyzeComplexity(unitInfos); 
 	DuplicationAnalysisResult duplicationAnalysisResult = analyzeDuplications(duplicates, volumeAnalysisResult.totalLinesOfCode);
+	MaintainabilityScore maintainabilityScore 			= analyzeMaintainability(<volumeAnalysisResult.ranking, complexityAnalysisResult.ranking, duplicationAnalysisResult.ranking, unitSizeAnalysisResult.ranking, RankingUnknown>); 
 	
-	Results results = <volumeAnalysisResult,unitSizeAnalysisResult,complexityAnalysisResult,duplicationAnalysisResult>;
+	Results results = <volumeAnalysisResult,unitSizeAnalysisResult,complexityAnalysisResult,duplicationAnalysisResult,maintainabilityScore>;
 	
 	printResults(results, project.uri);
 	

@@ -4,13 +4,11 @@ import Prelude;
 import DataTypes;
 
 public void printResults(Results results, str projectName) {
-
 	println(left("", 80, "="));
 	println(left("=== Results for project: <projectName> ", 80, "="));
 	println(left("", 80, "="));
 	
 	println();
-
 	println("VOLUME RANKING");
 	println();
 	println("Total <results.volume.totalLinesOfCode> lines of which:");
@@ -51,6 +49,26 @@ public void printResults(Results results, str projectName) {
 	println("<results.duplicates.duplicateLines> of <results.duplicates.totalLinesOfCode> lines are duplicate: <results.duplicates.percentage>%");
 	println("Calculated duplications ranking: <results.duplicates.ranking.rank> (<results.duplicates.ranking.label>)");
 	
+	heading("SYSTEM MAINTAINABILITY RANKING");
+	println("<MaintainabilityAspects.analyzability>: <results.score.actual.aspects[MaintainabilityAspects.analyzability].rank.risk>");
+	println("<MaintainabilityAspects.changeability>: <results.score.actual.aspects[MaintainabilityAspects.changeability].rank.risk>");
+	println("<MaintainabilityAspects.stability>: <results.score.actual.aspects[MaintainabilityAspects.stability].rank.risk>");
+	println("<MaintainabilityAspects.testability>: <results.score.actual.aspects[MaintainabilityAspects.testability].rank.risk>");
+	println();
+	println("Overall maintainability ranking: <results.score.overall.rank> (<results.score.overall.label>)");
+	separator();
+	
+	
+}
+
+private void heading(str heading) {
+	println();
+	println(heading);
+	println();
+}
+
+private void separator() { 
+	println(left("", 80, "-"));
 }
 
 private void printRiskCategory(RiskCategory riskCategory, RiskEvaluation evaluation, bool showFilesForCategory) {
