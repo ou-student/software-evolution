@@ -44,3 +44,8 @@ alias LinesOfCode = list[LineOfCode];
 alias Position = tuple[int line, int column];
 
 alias VolumeAnalysisResult = tuple[Rank ranking, int totalLinesOfCode, int codeLines, int blankLines, int commentLines, set[LineCounts] counts];
+
+alias UnitSizeInfo = tuple[loc unit, int size];
+alias UnitSizes = set[UnitSizeInfo];
+
+alias UnitSizeAnalysisResult = tuple[Rank ranking, RiskEvaluation risk, int unitsCount];
