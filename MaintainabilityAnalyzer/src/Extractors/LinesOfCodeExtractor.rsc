@@ -6,6 +6,7 @@ import IO;
 import List;
 import Set;
 import String;
+import Utils::Normalizer;
 import DataTypes;
 
 /**
@@ -30,22 +31,12 @@ private int countBlankLines(list[str] lines) = size([x | x <- lines, trim(x) == 
  * @return A LineCounts instance containing the result of the calculation.
  */
 private LineCounts calculateLineCounts(loc file) {
-	M3 model = createM3FromFile(file);
-	str source = readFile(file);
-	list[str] lines = split("\n", source);	
-	int total = size(lines);
+	LinesOfCode normalized =  normalizeFile(file);
+	list[str] lines = readFileLines(file);
+	int total = size(lines);	
 	int blank = countBlankLines(lines);
-	int code = 0;
-	int comment = 0;
-	
-	// Straight forward calculation when there are no comments.
-	if (size(model.documentation) == 0) {
-		code = total - blank;
-	}
-	else {
-		code = calculateLinesOfCode(source, model);
-		comment = total - code - blank;		
-	}
+	int code = size(normalized);
+	int comment = total - code - blank;
 			
 	return <file, code, comment, blank, total>;	
 }

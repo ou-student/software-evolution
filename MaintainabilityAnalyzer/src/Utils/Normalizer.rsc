@@ -45,7 +45,14 @@ LinesOfCode normalizeFile(loc file) {
 		}
 		
 		// Create a source reference that points to the line of code.
-		loc src = createSourceReference(file, lineNumber, offset, index, size(tempLine));
+		loc src = file;
+		
+		try {
+			src = createSourceReference(file, lineNumber, offset, index, size(tempLine));
+		}
+		catch: {
+			src = file;
+		}
 		
 		// If the line is not a blank line, add it to the result.
 		// TODO: maybe do store blank line, but mark it as blank, so we can count them too...
