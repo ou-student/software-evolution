@@ -34,6 +34,7 @@ public void run(loc project) {
 	for(x <- model.declarations) {
 		// skip if code is part of unittests.
 		if(contains(x.src.path, "junit")) continue;
+		if(contains(x.src.path, "/test/")) continue;
 	
 		// If file:
 		if(isCompilationUnit(x.name)) {

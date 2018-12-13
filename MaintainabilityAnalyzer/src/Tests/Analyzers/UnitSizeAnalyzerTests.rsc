@@ -6,12 +6,12 @@ import Set;
 import Relation;
 
 test bool analyzeUnitSize_Correctly_Determines_Calculates_LinesOfCode() {
-	UnitSizes counts = {
-		<|project://test/small1.java|, 10>,
-		<|project://test/small2.java|, 15>,			
-		<|project://test/medium1.java|, 25>,		
-		<|project://test/large.java|, 50>,
-		<|project://test/verylarge.java|, 100>				
+	UnitInfos counts = {
+		<|project://test/small1.java|	, 10,	0>,
+		<|project://test/small2.java|	, 15,	0>,			
+		<|project://test/medium1.java|	, 25,	0>,		
+		<|project://test/large.java|	, 50,	0>,
+		<|project://test/verylarge.java|, 100,	0>				
 	};	
 	
 	UnitSizeAnalysisResult actual = analyzeUnitSize(counts);
@@ -23,50 +23,50 @@ test bool analyzeUnitSize_Correctly_Determines_Calculates_LinesOfCode() {
 }
 
 test bool analyzeUnitSize_Correctly_Calculates_UnitCounts() {
-	UnitSizes counts = {
-		<|project://test/small1.java|, 10>,
-		<|project://test/small2.java|, 15>,
-		<|project://test/small3.java|, 10>,
-		<|project://test/small4.java|, 15>,
-		<|project://test/small5.java|, 10>,
-		<|project://test/small6.java|, 15>,
-		<|project://test/small7.java|, 10>,
-		<|project://test/small8.java|, 15>,					
-		<|project://test/medium1.java|, 25>,
-		<|project://test/medium2.java|, 25>,
-		<|project://test/medium3.java|, 25>,
-		<|project://test/medium4.java|, 25>,		
-		<|project://test/large.java|, 50>,
-		<|project://test/large2.java|, 50>,
-		<|project://test/verylarge.java|, 100>				
+	UnitInfos counts = {
+		<|project://test/small1.java|, 	  10 , 0>,
+		<|project://test/small2.java|, 	  15 , 0>,
+		<|project://test/small3.java|, 	  10 , 0>,
+		<|project://test/small4.java|, 	  15 , 0>,
+		<|project://test/small5.java|, 	  10 , 0>,
+		<|project://test/small6.java|, 	  15 , 0>,
+		<|project://test/small7.java|, 	  10 , 0>,
+		<|project://test/small8.java|, 	  15 , 0>,					
+		<|project://test/medium1.java|,   25 , 0>,
+		<|project://test/medium2.java|,   25 , 0>,
+		<|project://test/medium3.java|,   25 , 0>,
+		<|project://test/medium4.java|,   25 , 0>,		
+		<|project://test/large.java|, 	  50 , 0>,
+		<|project://test/large2.java|, 	  50 , 0>,
+		<|project://test/verylarge.java|, 100, 0>				
 	};
 		
 	UnitSizeAnalysisResult actual = analyzeUnitSize(counts);
 	
-	return actual.risk[RiskCategories.low].unitCount == 8 &&
-		actual.risk[RiskCategories.moderate].unitCount == 4 && 
-		actual.risk[RiskCategories.high].unitCount == 2 &&
-		actual.risk[RiskCategories.veryHigh].unitCount == 1;
+	return size(actual.risk[RiskCategories.low].units) 		== 8 &&
+		   size(actual.risk[RiskCategories.moderate].units) == 4 && 
+		   size(actual.risk[RiskCategories.high].units) 	== 2 &&
+		   size(actual.risk[RiskCategories.veryHigh].units) == 1;
 }
 
 
 test bool analyzeUnitSize_Correctly_Calculates_Percentages() {
-	UnitSizes counts = {
-		<|project://test/small1.java|, 10>,
-		<|project://test/small2.java|, 15>,
-		<|project://test/small3.java|, 10>,
-		<|project://test/small4.java|, 15>,
-		<|project://test/small5.java|, 10>,
-		<|project://test/small6.java|, 15>,
-		<|project://test/small7.java|, 10>,
-		<|project://test/small8.java|, 15>,					
-		<|project://test/medium1.java|, 25>,
-		<|project://test/medium2.java|, 25>,
-		<|project://test/medium3.java|, 25>,
-		<|project://test/medium4.java|, 25>,		
-		<|project://test/large.java|, 50>,
-		<|project://test/large2.java|, 50>,
-		<|project://test/verylarge.java|, 100>				
+	UnitInfos counts = {
+		<|project://test/small1.java|, 	  10 , 0>,
+		<|project://test/small2.java|, 	  15 , 0>,
+		<|project://test/small3.java|, 	  10 , 0>,
+		<|project://test/small4.java|, 	  15 , 0>,
+		<|project://test/small5.java|, 	  10 , 0>,
+		<|project://test/small6.java|, 	  15 , 0>,
+		<|project://test/small7.java|, 	  10 , 0>,
+		<|project://test/small8.java|, 	  15 , 0>,					
+		<|project://test/medium1.java|,   25 , 0>,
+		<|project://test/medium2.java|,   25 , 0>,
+		<|project://test/medium3.java|,   25 , 0>,
+		<|project://test/medium4.java|,   25 , 0>,		
+		<|project://test/large.java|, 	  50 , 0>,
+		<|project://test/large2.java|, 	  50 , 0>,
+		<|project://test/verylarge.java|, 100, 0>				
 	};
 	
 	UnitSizeAnalysisResult result = analyzeUnitSize(counts);
@@ -80,14 +80,14 @@ test bool analyzeUnitSize_Correctly_Calculates_Percentages() {
 
 test bool analyzeUnitSize_Correctly_Calculates_VeryHigh_Rank() {
 	// Test line counts with 0% very high risk, 0% high risk, 25% moderate risk.
-	UnitSizes counts = {
-		<|project://test/small1.java|, 10>,
-		<|project://test/small2.java|, 15>,
-		<|project://test/small3.java|, 10>,
-		<|project://test/small4.java|, 15>,
-		<|project://test/small5.java|, 10>,
-		<|project://test/small6.java|, 15>,					
-		<|project://test/medium1.java|, 25>
+	UnitInfos counts = {
+		<|project://test/small1.java|,  10, 0>,
+		<|project://test/small2.java|,  15, 0>,
+		<|project://test/small3.java|,  10, 0>,
+		<|project://test/small4.java|,  15, 0>,
+		<|project://test/small5.java|,  10, 0>,
+		<|project://test/small6.java|,  15, 0>,					
+		<|project://test/medium1.java|, 25, 0>
 	};
 	
 	UnitSizeAnalysisResult actual = analyzeUnitSize(counts);
@@ -98,9 +98,9 @@ test bool analyzeUnitSize_Correctly_Calculates_VeryHigh_Rank() {
 test bool analyzeUnitSize_Correctly_Calculates_High_Rank() {
 	loc baseLoc = |project://test|;
 	// Generate test line counts with 0% very high risk, 5% high risk, 30% low risk.
-	UnitSizes counts = { <(baseLoc + "small<x>.java"), 10> | x <- [0..65] };
-	counts += { <(baseLoc + "medium<x>.java"), 25> | x <- [0..12] };
-	counts += { <(baseLoc + "large<x>.java"), 50> | x <- [0..1] };
+	UnitInfos counts =  { <(baseLoc + "small<x>.java"),  10, 0> | x <- [0..65] };
+			  counts += { <(baseLoc + "medium<x>.java"), 25, 0> | x <- [0..12] };
+			  counts += { <(baseLoc + "large<x>.java"),  50, 0> | x <- [0..1]  };
 	
 	UnitSizeAnalysisResult actual = analyzeUnitSize(counts);
 	
@@ -110,9 +110,9 @@ test bool analyzeUnitSize_Correctly_Calculates_High_Rank() {
 test bool analyzeUnitSize_Correctly_Calculates_Moderate_Rank() {
 	loc baseLoc = |project://test|;
 	// Generate test line counts with 0% very high risk, 10% high risk, 40% moderate risk.
-	UnitSizes counts = { <(baseLoc + "small<x>.java"), 10> | x <- [0..50] };
-	counts += { <(baseLoc + "medium<x>.java"), 25> | x <- [0..16] };
-	counts += { <(baseLoc + "large<x>.java"), 50> | x <- [0..2] };
+	UnitInfos counts =  { <(baseLoc + "small<x>.java"),  10, 0> | x <- [0..50] };
+			  counts += { <(baseLoc + "medium<x>.java"), 25, 0> | x <- [0..16] };
+			  counts += { <(baseLoc + "large<x>.java"),  50, 0> | x <- [0..2]  };
 	
 	UnitSizeAnalysisResult actual = analyzeUnitSize(counts);
 	
@@ -122,10 +122,10 @@ test bool analyzeUnitSize_Correctly_Calculates_Moderate_Rank() {
 test bool analyzeUnitSize_Correctly_Calculates_Low_Rank() {
 	loc baseLoc = |project://test|;
 	// Generate test line counts with 5% very high risk, 15% high risk, 50% moderate risk.
-	UnitSizes counts = { <(baseLoc + "small<x>.java"), 10> | x <- [0..60] };
-	counts += { <(baseLoc + "medium<x>.java"), 25> | x <- [0..40] };
-	counts += { <(baseLoc + "large<x>.java"), 50> | x <- [0..6] };	
-	counts += { <|project://test/verylarge.java|, 100>	};
+	UnitInfos counts =  { <(baseLoc + "small<x>.java"),  10, 0> | x <- [0..60] };
+			  counts += { <(baseLoc + "medium<x>.java"), 25, 0> | x <- [0..40] };
+			  counts += { <(baseLoc + "large<x>.java"),  50, 0> | x <- [0..6]  };
+			  counts += { <(baseLoc + "verylarge.java"), 100, 0>	};
 	
 	UnitSizeAnalysisResult actual = analyzeUnitSize(counts);
 	
@@ -135,10 +135,10 @@ test bool analyzeUnitSize_Correctly_Calculates_Low_Rank() {
 test bool analyzeUnitSize_Correctly_Calculates_VeryLow_Rank() {
 	loc baseLoc = |project://test|;
 	// Generate test line counts with > 5% very high risk, 15% high risk, 50% moderate risk.
-	UnitSizes counts = { <(baseLoc + "small<x>.java"), 10> | x <- [0..60] };
-	counts += { <(baseLoc + "medium<x>.java"), 25> | x <- [0..40] };
-	counts += { <(baseLoc + "large<x>.java"), 50> | x <- [0..7] };	
-	counts += { <|project://test/verylarge.java|, 100>	};
+	UnitInfos counts =  { <(baseLoc + "small<x>.java"),  10, 0> | x <- [0..60] };
+			  counts += { <(baseLoc + "medium<x>.java"), 25, 0> | x <- [0..40] };
+			  counts += { <(baseLoc + "large<x>.java"),  50, 0> | x <- [0..7]  };
+			  counts += { <(baseLoc + "verylarge.java"), 100, 0>	};
 	
 	UnitSizeAnalysisResult actual = analyzeUnitSize(counts);
 	
