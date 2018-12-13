@@ -2,6 +2,7 @@ module Extractors::DuplicationExtractor
 
 import Prelude;
 import DataTypes;
+import Utils::Normalizer;
 
 public alias Duplications = map[str piece, list[LineOfCode] clones];
 
@@ -20,12 +21,15 @@ private LineOfCode flatten(LinesOfCode locs) {
  * Extracts a given number of lines of code from the given source, concatenates the LOCs and sees if it exists 
  * in the given Duplications object. If it does, it adds the LineOfCode element to the duplicates.
  */
-Duplications extractDuplications(LinesOfCode source, Duplications duplicates, int nrOfLinesToMatch) {
+Duplications extractDuplications(loc source, Duplications duplicates, int nrOfLinesToMatch) {
+	// Normalize the file.
+	linesOfCode = normalizeFile(source);
+	
 	// As long as there are enough lines of code, check for duplicates.
-	while(size(source) >= nrOfLinesToMatch) {
+	while(size(linesOfCode) >= nrOfLinesToMatch) {
 	
 		// Take 6 lines from the given source.
-		LinesOfCode pieces = take(nrOfLinesToMatch, source);
+		LinesOfCode pieces = take(nrOfLinesToMatch, linesOfCode);
 		// Create a concatenated LineOfCode from the lines.
 		LineOfCode piece = flatten(pieces);
 		
@@ -39,7 +43,7 @@ Duplications extractDuplications(LinesOfCode source, Duplications duplicates, in
 		}
 		
 		// Drop first LOC from source so next line will be evaluated.
-		source = drop(1, source);
+		linesOfCode = drop(1, linesOfCode);
 	}
 	
 	return duplicates;

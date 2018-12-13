@@ -7,14 +7,19 @@ import Set;
 import Extractors::LinesOfCodeExtractor;
 import Extractors::DuplicationExtractor;
 import Extractors::UnitSizeExtractor;
+import Extractors::ComplexityExtractor;
 import Analyzers::VolumeAnalyzer;
 import Analyzers::UnitSizeAnalyzer;
+import Analyzers::DuplicationAnalyzer;
+import Analyzers::ComplexityAnalyzer;
+import Analyzers::MaintainabilityScoreAnalyzer;
 import lang::java::jdt::m3::Core;
 import String;
 import List;
 import DateTime;
 import Utils::Normalizer;
 import Utils::CoreExtension;
+import Utils::ResultPrinter;
 
 public void run(loc project) {
 	// Create new model from project file.
@@ -22,57 +27,43 @@ public void run(loc project) {
 	
 	// Instantiate required objects
 	Duplications duplicates = ();
+	UnitInfos unitInfos = {};
 	set[LineCounts] lineCounts = {};
 
 	// run metrics on compilation units and methods.
 	for(x <- model.declarations) {
+		// skip if code is part of unittests.
+		if(contains(x.src.path, "junit")) continue;
+		if(contains(x.src.path, "/test/")) continue;
+	
 		// If file:
 		if(isCompilationUnit(x.name)) {
-			lineCounts += extractLinesOfCode(x.src);
+			lineCounts += extractLinesOfCode(x.src);			
+		}
+		
+		// If class:
+		if(isClass(x.name)) {
+			// Extract duplicates
+			duplicates = extractDuplications(x.src, duplicates, 6);
 		}
 		
 		// If method:
-		if(isMethod(x.name) && !isAnonymous(x.name)) {
-			// Normalize file
-			linesOfCode = normalizeFile(x.src);
+		if(isMethod(x.name) && !isAnonymous(x.name)) {			
+			complexity = extractComplexity(x.src);
+			unitSize   = extractUnitSize(x.src);
 			
-			// Extract duplicates
-			duplicates = extractDuplications(linesOfCode, duplicates, 6);
+			unitInfos += <x.src, unitSize, complexity>;
 		}
 	}
 	
-	VolumeAnalysisResult volumeAnalysisResult = analyzeVolume(lineCounts);
+	VolumeAnalysisResult volumeAnalysisResult     	    = analyzeVolume(lineCounts);
+	UnitSizeAnalysisResult unitSizeAnalysisResult 	    = analyzeUnitSize(unitInfos); 
+	ComplexityAnalysisResult complexityAnalysisResult   = analyzeComplexity(unitInfos); 
+	DuplicationAnalysisResult duplicationAnalysisResult = analyzeDuplications(duplicates, volumeAnalysisResult.totalLinesOfCode);
+	MaintainabilityScore maintainabilityScore 			= analyzeMaintainability(<volumeAnalysisResult.ranking, complexityAnalysisResult.ranking, duplicationAnalysisResult.ranking, unitSizeAnalysisResult.ranking, RankingUnknown>); 
 	
-	println("VOLUME RANKING");
-	println();
-	println("Total <volumeAnalysisResult.totalLinesOfCode> lines of which:");
-	println("<volumeAnalysisResult.codeLines> lines of code");
-	println("<volumeAnalysisResult.commentLines> comment lines");
-	println("<volumeAnalysisResult.blankLines> blank lines");
-	println();
-	println("Calculated volume ranking: <volumeAnalysisResult.ranking.rank> (<volumeAnalysisResult.ranking.label>)");
-	println(left("", 80, "-"));
-	UnitSizes unitSizes = extractUnitSizes(methods(model));
-	UnitSizeAnalysisResult unitSizeAnalysisResult = analyzeUnitSize(unitSizes); 
-	RiskEvaluation unitSizeRisk = unitSizeAnalysisResult.risk;
+	Results results = <volumeAnalysisResult,unitSizeAnalysisResult,complexityAnalysisResult,duplicationAnalysisResult,maintainabilityScore>;
 	
-	println("UNIT SIZE RANKING");
-	println();
-	println("Total <unitSizeAnalysisResult.unitsCount> units of which:");
-	printRiskCategory(RiskCategories.veryHigh, unitSizeRisk);
-	printRiskCategory(RiskCategories.high, unitSizeRisk);
-	printRiskCategory(RiskCategories.moderate, unitSizeRisk);
-	printRiskCategory(RiskCategories.low, unitSizeRisk);	
-	println();
-	println("Calculated unit size ranking: <unitSizeAnalysisResult.ranking.rank> (<unitSizeAnalysisResult.ranking.label>)");
-	println(left("", 80, "-"));
+	printResults(results, project.uri);
 	
-}
-
-private void printRiskCategory(RiskCategory riskCategory, RiskEvaluation evaluation) {
-	if (riskCategory in evaluation) {
-		RiskValues values = evaluation[riskCategory];
-		
-		println("<left(riskCategory.risk + " (" + riskCategory.category + ")", 30)>\t <values.percentage> % (totalling <values.linesOfCode> lines of code)");
-	}
 }
