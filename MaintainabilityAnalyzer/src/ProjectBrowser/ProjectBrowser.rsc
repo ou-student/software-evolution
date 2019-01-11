@@ -5,8 +5,11 @@ import util::Resources;
 import vis::Figure;
 import vis::Render;
 import vis::KeySym;
+import lang::java::jdt::m3::Core;
 import Set;
 import Map;
+import IO;
+import String;
 
 alias BrowserItem = tuple[str label, loc location];
 
@@ -14,6 +17,9 @@ alias ItemNode = tuple[str label, loc location];
 
 private ItemNode currentItem;
 private ItemNode rootItem;  
+private ItemNode parentItem;
+
+private M3 currentModel;
 
 private set[loc] projectLocations;
 
@@ -29,12 +35,21 @@ public void renderBrowser() {
 }
 
 private bool handleClick(ItemNode item) {
-	println(item);
-	currentItem = item;
-	renderBrowser(item);
+	println("click: <item>");	
 	
-	return true;
+	if (item.location.scheme == "java+compilationUnit") {
+		return false;
+	}
+	else {	
+		parentItem = currentItem;
+		currentItem = item;
+		renderBrowser(item);	
+		
+		return true;
+	}
 }
+
+private str packageName(str path) = replaceFirst(replaceAll(path, "/", "."), ".", "");
 
 
 public void renderBrowser(ItemNode parent) {
@@ -44,7 +59,7 @@ public void renderBrowser(ItemNode parent) {
 	})];
 	
 	if (currentItem != rootItem) {
-		ItemNode root = rootItem;
+		ItemNode root = parentItem;
 		
 		items = [listItem(root.label, bool(int btn, map[KeyModifier,bool] modifiers) {			
 			return handleClick(root); 
@@ -72,6 +87,13 @@ private list[ItemNode] children(ItemNode parent) {
 	
 	if (parent == rootItem) {
 		children = [<p.authority, p> | p <- projectLocations];
+	}
+	else if (parent.location.scheme == "project") {
+		currentModel = createM3FromEclipseProject(parent.location);		
+		children = sort([ <packageName(p.path), p> | p <- packages(currentModel) ]);
+	}
+	else if (parent.location.scheme == "java+package") {
+		children = [ <f.file, f> | f <- files(currentModel), path := f.path, path == ("/src" + parent.location.path + "/" + f.file) ];
 	}
 	
 	return children;
