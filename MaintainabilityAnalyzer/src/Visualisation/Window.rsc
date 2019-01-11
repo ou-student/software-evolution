@@ -10,41 +10,75 @@ import util::Editors;
 import DataTypes;
 import Main;
 
+import Visualisation::ProjectBrowser;
+import Visualisation::Controls;
+
+//UnitInfos r = {};
+bool _redraw = false;
+loc selectedProject = |project://JabberPoint/|;
+
+data DataSet = complexitySet(bool changed, UnitInfos ui, str label);
+DataSet complexityData = complexitySet(false, {}, "");
 
 
 void begin() {
-	bool redraw = false;
 	
+	menu = menuBar([myButton("Load", loadProject),myButton("Clear", clear)]);
 	
-	UnitInfos r = {};
-	
-	btnLoad = button("Start", void(){ 
-			r = run(|project://JabberPoint/|); 
-			redraw = true;
-		});
-	menu = [ btnLoad, btnLoad ];
-	
-	Figure getTreemap() {
-		return computeFigure(bool() {bool temp = redraw; redraw = false; return temp; }, Figure() {
-		
-			Figures boxes = [];
-			if(size(r) > 0) {
-				cscale = colorScale([s.complexity | s <- r], color("green"),color("red"));
-				boxes = [mkBox(s, cscale(s.complexity)) | s <- r ];
-			}
-			
-			return treemap(boxes);
-		});
-	}
-	
-	
-	
-	
-	render(vcat([hcat(menu, std(resizable(false)), std(height(48)), std(width(200)), left()), 
-				 hcat([getTreemap()]),
-				 hcat([box(height(48),width(100),resizable(false))])
-			    ]));
+	render(
+		page("Maintainance Analyzer",
+			 menu,
+			 createMain(panel(renderBrowser()), getTreemapPanel()),
+			 footer("Copyright by A. Walgreen & E. Postma ©2019\t")
+		)
+	);
+
 }
+
+private Figure getTreemapPanel() {
+	return computeFigure(bool() { bool temp = complexityData.changed; complexityData.changed = false; return temp; }, Figure() {
+		Figures boxes = [];
+		if(size(complexityData.ui) > 0) {
+			cscale = colorScale([s.complexity | s <- complexityData.ui], color("green"),color("red"));
+			boxes = [createTreemapBox(s, cscale(s.complexity)) | s <- complexityData.ui ];
+		}
+		
+		return panel(treemap(boxes, lineWidth(0)), complexityData.label, 0);
+	});
+}
+
+private void redraw() {
+	_redraw = true;
+}
+
+private void clear() {
+	complexityData = complexitySet(true, {}, "");
+}
+
+private void loadProject() {
+	proj = getCurrentProject();
+	r = run(proj.location);
+	complexityData = complexitySet(true, r, proj.label);
+}
+
+
+
+
+
+
+
+public Figure createMain(Figure left, Figure right) {
+	return box(
+		hcat(
+		[
+			space(left, hshrink(0.3)),
+			space(right)
+		],
+		gap(48), startGap(true), endGap(true)),
+		fillColor(color("white", 0.0)), lineWidth(0)
+	);
+}
+
 
 public FProperty popup(UnitInfo s) {
 	return mouseOver(box(vcat([text(s.unit.path), text(toString(s.complexity))]),
@@ -53,11 +87,21 @@ public FProperty popup(UnitInfo s) {
 					 resizable(false)));
 }
 
-public Figure mkBox(UnitInfo s, Color c) {
+public Figure createTreemapBox(UnitInfo s, Color c) {
 	return box(area(s.size),
 			   fillColor(c),
 			   popup(s),
-			   onMouseDown(bool (int btn, map[KeyModifier, bool] m) {
-			   		edit(s.unit); return true;
-			   }));
+			   onMouseDown(treemapBoxClickHandler(s.unit))
+			   );
 }
+
+private bool(int, map[KeyModifier, bool]) treemapBoxClickHandler(loc location) = bool(int btn, map[KeyModifier, bool] mdf) {
+	if(btn == 1 && mdf[\modCtrl()] == true){
+		edit(location);
+		return true;
+	}
+	return false;
+};
+
+
+
