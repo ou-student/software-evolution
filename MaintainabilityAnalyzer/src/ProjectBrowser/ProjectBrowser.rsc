@@ -13,49 +13,48 @@ alias BrowserItem = tuple[str label, loc location];
 alias ItemNode = tuple[str label, loc location];
 
 private ItemNode currentItem;
+private ItemNode rootItem;  
 
 private set[loc] projectLocations;
 
-private bool isInitialized = false;
+public void renderBrowser() {
+	projectLocations = projects();	
+	
+	ItemNode root = <"Overall maintainability (<size(projectLocations)> projects)", |browse://root|>;
+	
+	rootItem = root;
+	currentItem = root;
+	
+	renderBrowser(rootItem);
+}
 
-public loc RootNode = |browse://root|;
-
-public void reset() {
-	isInitialized = false;
+private bool handleClick(ItemNode item) {
+	println(item);
+	currentItem = item;
+	renderBrowser(item);
+	
+	return true;
 }
 
 
 public void renderBrowser(ItemNode parent) {
-	if (!isInitialized) {
-		initialize();
-	}
-	
 	list[Figure] items = [listItem(currentItem.label, bool(int btn, map[KeyModifier,bool] modifiers) {
 		println(currentItem); 
 		return true; 
 	})];
 	
-	if (currentItem.location != RootNode) {
-		ItemNode root = <"..", RootNode>;
+	if (currentItem != rootItem) {
+		ItemNode root = rootItem;
 		
-		items = [listItem(root.label, bool(int btn, map[KeyModifier,bool] modifiers) {
-			currentItem = root;
-			println(currentItem);
-			
-			renderBrowser(currentItem);
-			return true; 
+		items = [listItem(root.label, bool(int btn, map[KeyModifier,bool] modifiers) {			
+			return handleClick(root); 
 		})] + items;
 	}
 	
 	for(ItemNode child <- children(currentItem)) {
 		ItemNode current = child;
 		items += box(text(child.label), resizable(false), width(200), onMouseDown( bool(int btn, map[KeyModifier,bool] modifiers) {
-			
-			currentItem = current;
-			println(currentItem);
-			
-			renderBrowser(currentItem);
-			return true;
+			return handleClick(current); 			
 		}));	
 	}
 	
@@ -65,17 +64,13 @@ public void renderBrowser(ItemNode parent) {
 private void initialize() {	
 	projectLocations = projects();	
 	
-	ItemNode root = <"Overall maintainability (<size(projectLocations)> projects)", RootNode>;
 	
-	currentItem = root;
-	
-	isInitialized = true;
 }
 
 private list[ItemNode] children(ItemNode parent) {
 	list[ItemNode] children = [];
 	
-	if (parent.location == RootNode) {
+	if (parent == rootItem) {
 		children = [<p.authority, p> | p <- projectLocations];
 	}
 	
