@@ -21,7 +21,7 @@ import Utils::Normalizer;
 import Utils::CoreExtension;
 import Utils::ResultPrinter;
 
-public void run(loc project) {
+public Results run(loc project) {
 	// Create new model from project file.
 	M3 model = createM3FromEclipseProject(project);
 	
@@ -65,5 +65,7 @@ public void run(loc project) {
 	Results results = <volumeAnalysisResult,unitSizeAnalysisResult,complexityAnalysisResult,duplicationAnalysisResult,maintainabilityScore>;
 	
 	printResults(results, project.uri);
+	
+	return results;
 	
 }
