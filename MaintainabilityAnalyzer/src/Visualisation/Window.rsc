@@ -14,7 +14,6 @@ import Visualisation::ProjectBrowser;
 import Visualisation::Controls;
 
 //UnitInfos r = {};
-bool _redraw = false;
 loc selectedProject = |project://JabberPoint/|;
 
 data DataSet = complexitySet(bool changed, UnitInfos ui, str label);
