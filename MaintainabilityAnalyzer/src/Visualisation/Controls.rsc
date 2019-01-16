@@ -85,10 +85,9 @@ public Figure panel(Figure content, str title, int margin) {
 			  vcat(
 			  	[
 			  	label(title),
-			  	content
+			  	space(content,gap(margin))
 			  	]
 			  ),
-			  gap(margin),
 			  lineWidth(0), shadow(true)
 	);
 }
