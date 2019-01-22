@@ -86,19 +86,36 @@ private str getLabel(loc location) {
 	else if (location.scheme == "project" && location.path == "/") {
 		label = location.authority;
 	}
-	else if (location.scheme == "java+method") {
+	else if (location.scheme == "java+method" || location.scheme == "java+constructor") {
 		label = location.file;
 	}
 	
 	return label;
 }
 
-private list[Figure] createItem(loc location, BrowseTree browseTree) {
+private Figure constructorIcon = text("", font("Segoe MDL2 Assets"), resizable(false), size(24, 24), left());
+private Figure methodIcon = text("", font("Segoe MDL2 Assets"), resizable(false), size(24, 24), left());
+private Figure fileIcon = text("", font("Segoe MDL2 Assets"), resizable(false), size(24, 24), left());
+private Figure packageIcon = text("", font("Segoe MDL2 Assets"), resizable(false), size(24, 24), left());
+private Figure projectIcon = text("", font("Segoe MDL2 Assets"), resizable(false), size(24, 24), left());
+private Figure homeIcon = text("", font("Segoe MDL2 Assets"), resizable(false), size(24, 24), left());
 
+private map[str scheme, Figure icon] icons = (
+	"java+compilationUnit":fileIcon,
+	"java+package":packageIcon,
+	"java+method":methodIcon,
+	"java+constructor":constructorIcon,
+	"project":projectIcon,
+	"browse":homeIcon
+);
+
+
+private list[Figure] createItem(loc location, BrowseTree browseTree) {
 	str label = getLabel(location);
 	
 	return [
-		box(width(10), lineWidth(0), resizable(false)), 
+		//box(width(10), lineWidth(0), resizable(false)),
+	 	icons[location.scheme],
 		box(
 			text(label, left(), fontSize(12)),		
 			vresizable(false), 
@@ -116,6 +133,7 @@ private list[Figure] createItem(loc location, BrowseTree browseTree) {
 		)
 	];
 }
+
 
 private Figure backbutton(BrowseTree browseTree) {
 	return box(
