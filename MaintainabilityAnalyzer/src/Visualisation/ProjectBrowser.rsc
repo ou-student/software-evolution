@@ -1,6 +1,5 @@
 module Visualisation::ProjectBrowser
 
-
 import Prelude;
 import util::Resources;
 import vis::Figure;
@@ -37,13 +36,17 @@ public BrowseTree createBrowseTree(set[M3] projectModels) {
 	return tree;
 }
 
-public Figure createBrowser(BrowseTree browseTree) {
-	int w = 350;
-	
-	return box(vcat([
-		box(createHeader(browseTree), size(w, 20), resizable(false)),
-		box(scrollable(createItems(browseTree), width(w)), std(fontSize(9)), lineWidth(0))		
-	]), std(font("Dialog")), width(w), hresizable(false), lineWidth(0));
+public Figure createBrowser(BrowseTree browseTree) {	
+	return grid([
+		[createHeader(browseTree)],
+		[vscrollable(box(
+			grid(createItems(browseTree), [top()]),
+			top(),
+			left(),
+			resizable(false),
+			lineWidth(0)			
+		))]
+	]);
 }
 
 private Figure createHeader(BrowseTree browseTree) {
@@ -65,11 +68,11 @@ private Figure createHeader(BrowseTree browseTree) {
 				text(label, left(), size(20, 20), resizable(false), fontColor("white"), fontBold(true)),
 				vresizable(false), height(40), lineWidth(0), fillColor(rgb(84,110,122))
 			)
-		]), left(), std(fillColor(rgb(84,110,122))), std(fontColor("White")));
+		]), left(), vresizable(false), height(40), std(fillColor(rgb(84,110,122))), std(fontColor("White")));
 	}
 }
 
-private Figure createItems(BrowseTree browseTree)  = box(vcat([ createItem(c, browseTree) | c <- sort(invert(browseTree)[CurrentLocation]) ]));
+private list[list[Figure]] createItems(BrowseTree browseTree) = [ createItem(c, browseTree) | c <- sort(invert(browseTree)[CurrentLocation]) ]; //, [fillColor("Orange"), fontSize(40) ]));
 
 private str getLabel(loc location) {
 	str label = location.path;
@@ -90,12 +93,11 @@ private str getLabel(loc location) {
 	return label;
 }
 
-private Figure createItem(loc location, BrowseTree browseTree) {
+private list[Figure] createItem(loc location, BrowseTree browseTree) {
 
 	str label = getLabel(location);
 	
-	return hcat(
-	[
+	return [
 		box(width(10), lineWidth(0), resizable(false)), 
 		box(
 			text(label, left(), fontSize(12)),		
@@ -108,9 +110,11 @@ private Figure createItem(loc location, BrowseTree browseTree) {
 		    	render(createBrowser(browseTree));
 		    	
 		    	return true;
-			})
-		,lineWidth(0))
-	]);
+			}), 
+			lineWidth(0),
+			top()
+		)
+	];
 }
 
 private Figure backbutton(BrowseTree browseTree) {
