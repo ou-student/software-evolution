@@ -150,7 +150,8 @@ private list[Figure] createItem(loc location, BrowseTree browseTree) {
 					
 				return true;
 			}), 
-			lineWidth(0),			
+			lineWidth(0),	
+			width(450),		
 			top(),			
 			fillColor
 		),
