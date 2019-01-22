@@ -15,18 +15,25 @@ import DataTypes;
 
 import List;
 import Map;
+import DateTime;
 import Set;
 import String;
 import lang::java::jdt::m3::Core;
 
 public loc RootLocation = |browse://root|;
 public loc CurrentLocation = RootLocation;
+public loc SelectedLocation = RootLocation;
+
 public str PathNormlizationPrefix = "/src";
 
 alias BrowseTree = map[loc location, loc parent];
 
+private datetime clicked;
+private bool firstClick = true;
 
 public BrowseTree createBrowseTree(set[M3] projectModels) {
+	
+	
 	BrowseTree tree = ();
 	
 	for (model <- projectModels) {
@@ -36,22 +43,21 @@ public BrowseTree createBrowseTree(set[M3] projectModels) {
 	return tree;
 }
 
-public Figure createBrowser(BrowseTree browseTree) {	
+public Figure createBrowser(BrowseTree browseTree) {
 	return computeFigure(bool() { return true; }, Figure() {
 		return grid([
 			[createHeader(browseTree)],
 			[vscrollable(box(
 				grid(createItems(browseTree), [top()]),
+				std(fontColor(rgb(55,71,79))),
 				top(),
 				left(),
 				resizable(false),
 				lineWidth(0)			
-			))]
+			)
+			)]
 		]);
-	});
-
-
-	
+	});	
 }
 
 private Figure createHeader(BrowseTree browseTree) {
@@ -98,12 +104,15 @@ private str getLabel(loc location) {
 	return label;
 }
 
-private Figure constructorIcon = text("", font("Segoe MDL2 Assets"), resizable(false), size(24, 24), left());
-private Figure methodIcon = text("", font("Segoe MDL2 Assets"), resizable(false), size(24, 24), left());
-private Figure fileIcon = text("", font("Segoe MDL2 Assets"), resizable(false), size(24, 24), left());
-private Figure packageIcon = text("", font("Segoe MDL2 Assets"), resizable(false), size(24, 24), left());
-private Figure projectIcon = text("", font("Segoe MDL2 Assets"), resizable(false), size(24, 24), left());
-private Figure homeIcon = text("", font("Segoe MDL2 Assets"), resizable(false), size(24, 24), left());
+private list[FProperty] iconStyle = [ font("Segoe MDL2 Assets"), resizable(false), size(24, 24) ];
+
+private Figure constructorIcon = text("", iconStyle);
+private Figure methodIcon = text("", iconStyle);
+private Figure fileIcon = text("", iconStyle);
+private Figure packageIcon = text("", iconStyle);
+private Figure projectIcon = text("", iconStyle);
+private Figure homeIcon = text("", iconStyle);
+private Figure forwardIcon = text("", [ font("Segoe MDL2 Assets"), resizable(false), size(24, 24), fontColor(rgb(38,50,56)), right()]);
 
 private map[str scheme, Figure icon] icons = (
 	"java+compilationUnit":fileIcon,
@@ -118,21 +127,46 @@ private map[str scheme, Figure icon] icons = (
 private list[Figure] createItem(loc location, BrowseTree browseTree) {
 	str label = getLabel(location);
 	
-	return [		
-	 	icons[location.scheme],
+	FProperty fillColor = (SelectedLocation == location) ? fillColor(rgb(176,190,197)) : fillColor(rgb(250,250,250));
+	FProperty fontColor = (SelectedLocation == location) ? fontColor("Black") : fontColor(rgb(55,71,79)); 
+	Figure icon = (location.scheme == "java+method" || location.scheme == "java+constructor") ? box(size(24, 24), resizable(false), fillColor, lineWidth(0)) : forwardIcon;
+	
+	return [	
+		box(	
+	 		icons[location.scheme],
+	 		lineWidth(0),
+	 		resizable(false),	 		
+	 		width(24),
+	 		fillColor
+	 	),
 		box(
-			text(label, left(), fontSize(12)),		
-			vresizable(false), 
+			text(label, left(), fontSize(12), fontColor),		
+			vresizable(false),
+			hresizable(true), 
 			height(24), 
 			onMouseDown(bool (int btn, map[KeyModifier,bool] modifiers) {
 				loc child = location;				
-				CurrentLocation = child;
-				
-		    	return true;
+				SelectedLocation = child;
+					
+				return true;
 			}), 
-			lineWidth(0),
-			top()
-		)
+			lineWidth(0),			
+			top(),			
+			fillColor
+		),
+		box(
+			icon,
+			fillColor,
+	 		lineWidth(0),
+	 		resizable(false),	 		
+	 		width(48),
+	 		onMouseDown(bool (int btn, map[KeyModifier,bool] modifiers) {
+				loc child = location;				
+				CurrentLocation = child;
+					
+				return true;
+			})
+		)	
 	];
 }
 
