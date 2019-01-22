@@ -11,7 +11,11 @@ import DataTypes;
 import Main;
 
 import Visualisation::ProjectBrowser;
+import Visualisation::MethodInformationPanel;
 import Visualisation::Controls;
+
+import lang::java::jdt::m3::Core;
+import analysis::graphs::Graph;
 
 //UnitInfos r = {};
 loc selectedProject = |project://JabberPoint/|;
@@ -20,18 +24,41 @@ data DataSet = complexitySet(bool changed, UnitInfos ui, str label);
 DataSet complexityData = complexitySet(false, {}, "");
 
 
+private loc currentSelectedMethod;
+
+void onPBNewLocationSelected(M3 model, loc location) {
+	if(isMethod(location)){
+		mip_setCurrentMethod(model, location);
+	} else {
+		mip_clearMethodInformationPanel();
+	}
+}
+
+/**
+ * Event listener for MethodInformationPanel new selected method.
+ */
+void onMIPNewMethodSelected(loc method) {
+	println("Selected new method <method>");
+	pb_setLocation(method);
+}
+
+
 void begin() {
+
+	pb_addNewLocationSelectedEventListener(onPBNewLocationSelected);
+	mip_addNewMethodSelectedEventListener(onMIPNewMethodSelected);
 	
 	menu = menuBar([myButton("Load", loadProject),myButton("Clear", clear)]);
+	
+	//browseTree = createBrowseTree({createM3FromEclipseProject(|project://smallsql/|)});
 	
 	render(
 		page("Maintainance Analyzer",
 			 menu,
-			 createMain(panel(renderBrowser()), getTreemapPanel()),
+			 createMain(panel(projectBrowser(), "", 0), methodInformationPanel()/*, getTreemapPanel()*/),
 			 footer("Copyright by A. Walgreen & E. Postma ©2019\t")
 		)
 	);
-
 }
 
 private Figure getTreemapPanel() {
@@ -46,10 +73,6 @@ private Figure getTreemapPanel() {
 	});
 }
 
-private void redraw() {
-	_redraw = true;
-}
-
 private void clear() {
 	complexityData = complexitySet(true, {}, "");
 }
@@ -60,17 +83,11 @@ private void loadProject() {
 	complexityData = complexitySet(true, r, proj.label);
 }
 
-
-
-
-
-
-
 public Figure createMain(Figure left, Figure right) {
 	return box(
 		hcat(
 		[
-			space(left, hshrink(0.3)),
+			space(left, hsize(400), hresizable(false)),
 			space(right)
 		],
 		gap(48), startGap(true), endGap(true)),

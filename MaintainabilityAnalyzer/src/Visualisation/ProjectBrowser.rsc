@@ -1,5 +1,6 @@
 module Visualisation::ProjectBrowser
 
+import Visualisation::Controls;
 
 import Prelude;
 import util::Resources;
@@ -7,6 +8,7 @@ import vis::Figure;
 import vis::Render;
 import vis::KeySym;
 import lang::java::jdt::m3::Core;
+import lang::java::m3::AST;
 import Set;
 import Map;
 import IO;
@@ -14,40 +16,114 @@ import String;
 import Main;
 import DataTypes;
 
+import util::Editors;
+
 import List;
 import Map;
 import Set;
 import String;
-import lang::java::jdt::m3::Core;
 
 public loc RootLocation = |browse://root|;
-public loc CurrentLocation = RootLocation;
+public loc BrowserLocation = RootLocation;
+private loc SelectedLocation = BrowserLocation;
 public str PathNormlizationPrefix = "/src";
+
+private M3 _currentModel = createM3FromEclipseProject(|project://smallsql|);
 
 alias BrowseTree = map[loc location, loc parent];
 
+private list[void()] actionListeners = [];
+
+public BrowseTree browseTree = ();
+
+/*****************************/
+/* Redraw panel				 */
+/*****************************/
+private bool _redraw = false;
+private void redraw() { _redraw = true; }
+
+/*****************************/
+/* New Location Selected event */
+/*****************************/
+private list[void(M3, loc)] newLocationSelectedEventListeners = [];
+
+/**
+ * Adds an event listener for the new location selected event.
+ */
+public void pb_addNewLocationSelectedEventListener(void(M3, loc) listener) {
+	if(indexOf(newLocationSelectedEventListeners, listener) == -1) {
+		newLocationSelectedEventListeners += [listener];
+	}
+}
+
+/**
+ * Trigger the new method selected event listener.
+ */
+private void newLocationSelected(M3 model, loc location) {
+	for(l <- newLocationSelectedEventListeners) l(model, location);
+}
+
+/**
+ * Local event handler for selecting new location.
+ */
+private void onNewLocationSelected(M3 model, loc location) {
+	pb_setLocation(location);
+}
+
+//private void projectBrowserUpdate() {
+//	redraw();
+//	for(l <- actionListeners) l();
+//}
+
+public M3 getCurrentModel() {
+	return _currentModel;
+}
+
+public loc getSelectedLocation() {
+	return SelectedLocation;
+}
+
+public void pb_setLocation(loc location) {
+	if(location in browseTree){
+		SelectedLocation = location;
+		if(isMethod(location)) {
+			BrowserLocation = browseTree[location];
+		} else {
+			BrowserLocation = location;
+		}
+		redraw();
+	}
+}
 
 public BrowseTree createBrowseTree(set[M3] projectModels) {
 	BrowseTree tree = ();
 	
 	for (model <- projectModels) {
 		tree += createBrowseTree(model);	
-	}	
-	
+	}
+
 	return tree;
 }
 
-public Figure createBrowser(BrowseTree browseTree) {
-	int w = 350;
+public Figure projectBrowser() {
+	browseTree = createBrowseTree({_currentModel});
 	
-	return box(vcat([
-		box(createHeader(browseTree), size(w, 20), resizable(false)),
-		box(scrollable(createItems(browseTree), width(w)), std(fontSize(9)), lineWidth(0))		
-	]), std(font("Dialog")), width(w), hresizable(false), lineWidth(0));
+	pb_addNewLocationSelectedEventListener(onNewLocationSelected);
+	
+	return computeFigure(bool() { bool temp = _redraw; _redraw = false; return temp; }, Figure() {
+	
+		println("Current: " + BrowserLocation.path);
+		println("Selected: " + SelectedLocation.path);
+	
+	    return box(vcat([
+		box(createHeader(), vsize(20), vresizable(false)),
+		box(vscrollable(createItems()), std(fontSize(9)), lineWidth(0))		
+	]), std(font("Dialog")), lineWidth(0));
+	});
 }
 
-private Figure createHeader(BrowseTree browseTree) {
-	if (CurrentLocation == RootLocation) {
+private Figure createHeader() {
+	if (BrowserLocation == RootLocation) {
 		int projectCount = size({ p | p <- invert(browseTree)[RootLocation], p != RootLocation });
 		
 		return box(
@@ -56,10 +132,10 @@ private Figure createHeader(BrowseTree browseTree) {
 		);
 	}
 	else {
-		str label = getLabel(CurrentLocation);
+		str label = getLabel(BrowserLocation);
 		
 		return box(hcat([
-			backbutton(browseTree),	
+			backbutton(),	
 			box(width(10), resizable(false)),		
 			box(
 				text(label, left(), size(20, 20), resizable(false), fontColor("white"), fontBold(true)),
@@ -69,7 +145,7 @@ private Figure createHeader(BrowseTree browseTree) {
 	}
 }
 
-private Figure createItems(BrowseTree browseTree)  = box(vcat([ createItem(c, browseTree) | c <- sort(invert(browseTree)[CurrentLocation]) ]));
+private Figure createItems() = vcat([ createItem(c) | c <- sort(invert(browseTree)[BrowserLocation]) ]);
 
 private str getLabel(loc location) {
 	str label = location.path;
@@ -83,45 +159,68 @@ private str getLabel(loc location) {
 	else if (location.scheme == "project" && location.path == "/") {
 		label = location.authority;
 	}
-	else if (location.scheme == "java+method") {
-		label = location.file;
+	else if (isMethod(location)) {
+		label = /^<n:.*>\(.*$/ := location.file ? n : location.file;
+		label += "()";
 	}
 	
 	return label;
 }
 
-private Figure createItem(loc location, BrowseTree browseTree) {
+private Figure createItem(loc location) {
 
 	str label = getLabel(location);
 	
-	return hcat(
-	[
-		box(width(10), lineWidth(0), resizable(false)), 
-		box(
-			text(label, left(), fontSize(12)),		
-			vresizable(false), 
-			height(24), 
-			onMouseDown(bool (int btn, map[KeyModifier,bool] modifiers) {
-				loc child = location;
-				
-				CurrentLocation = child;        	
-		    	render(createBrowser(browseTree));
-		    	
-		    	return true;
-			})
-		,lineWidth(0))
-	]);
+	return listItem(label, itemClickHandler(location));
+	
+	//return hcat(
+	//[
+	//	box(width(10), lineWidth(0), resizable(false)), 
+	//	box(
+	//		text(label, left(), fontSize(12)),		
+	//		vresizable(false), 
+	//		height(24), 
+	//		onMouseDown(bool (int btn, map[KeyModifier,bool] modifiers) {
+	//			loc child = location;
+	//			if(isMethod(child)) {
+	//				println(child);
+	//				edit(child);
+	//			}
+	//			else {
+	//				
+	//				BrowserLocation = child;        	
+	//				redraw();
+	//			}
+	//	    	
+	//	    	return true;
+	//		})
+	//	,lineWidth(0))
+	//], vsize(24), vresizable(false));
 }
 
-private Figure backbutton(BrowseTree browseTree) {
+private bool(int, map[KeyModifier,bool]) itemClickHandler(loc location) = bool(int btn, map[KeyModifier,bool] mdf) {
+	if(btn == 1) {
+		newLocationSelected(_currentModel, location);
+		//if(isMethod(location)){
+		//	pb_setLocation(location);
+		//	SelectedLocation = location;
+		//} else {
+		//	BrowserLocation = location;
+		//}
+		//projectBrowserUpdate();		
+	}
+
+	return true;
+}; 
+
+private Figure backbutton() {
 	return box(
 		text("", font("Segoe MDL2 Assets"), resizable(false), size(20, 20), left()),
 		lineWidth(0),
 		left(),
 		resizable(false),
 		onMouseDown(bool (int btn, map[KeyModifier,bool] modifiers) {
-       		CurrentLocation = browseTree[CurrentLocation];        	
-       		render(createBrowser(browseTree));
+			newLocationSelected(_currentModel, browseTree[BrowserLocation]);
         	
        		return true;
     	})

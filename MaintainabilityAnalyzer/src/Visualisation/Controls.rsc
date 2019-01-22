@@ -4,6 +4,12 @@ import vis::Figure;
 import vis::KeySym;
 import String;
 
+public Color ColorPrimary         = rgb(84,110,122);
+public Color ColorPLight          = rgb(129,156,169);
+public Color ColorPDark	          = rgb(41,67,78);
+public Color ColorBackground      = rgb(225,226,225);
+public Color ColorPopupBackground = ColorBackground;
+
 /************************************/
 /* Button Control                   */
 /************************************/
@@ -11,7 +17,7 @@ public Figure myButton(str caption, void() action) {
 	bool hovered = false;
 
 	return overlay(
-			[box(lineWidth(0), fillColor(rgb(129,156,169)),
+			[box(lineWidth(0), fillColor(ColorPLight),
 				onMouseEnter(void(){hovered = true;}),
 				onMouseExit(void(){hovered = false;}),
 				onMouseDown(btnClickHandler(action))
@@ -37,7 +43,7 @@ public Figure label(str caption) {
 	if(caption != "") {
 		return box(
 			text(caption, fontColor("white"), fontBold(true)),
-			vresizable(false), height(40), lineWidth(0), fillColor(rgb(84,110,122))
+			vresizable(false), height(40), lineWidth(0), fillColor(ColorPrimary)
 		);
 	}
 	return space(size(0), resizable(false));
@@ -47,10 +53,10 @@ public Figure label(str caption) {
 /* Header Control                   */
 /************************************/
 public Figure header(str caption) {	
-	if(title != "") {
+	if(caption != "") {
 		return box(
 			text("  " + caption, fontSize(30), fontColor("white"), left()),
-			vresizable(false), height(80), lineWidth(0), fillColor(rgb(41,67,78))
+			vresizable(false), height(80), lineWidth(0), fillColor(ColorPDark)
 		);
 	}
 	return space(size(0), resizable(false));
@@ -60,10 +66,10 @@ public Figure header(str caption) {
 /* Footer Control                   */
 /************************************/
 public Figure footer(str caption) {	
-	if(title != "") {
+	if(caption != "") {
 		return box(
 			text("  " + caption, fontColor("white"), right()),
-			vresizable(false), height(60), lineWidth(0), fillColor(rgb(41,67,78))
+			vresizable(false), height(60), lineWidth(0), fillColor(ColorPDark)
 		);
 	}
 	return space(size(0), resizable(false));
@@ -101,7 +107,7 @@ public Figure menuBar(Figure menuItems...) {
 		hcat(menuItems, resizable(false), left()),
 		
 		// Styling
-		vresizable(false), shadow(true), height(60), left(), fillColor(rgb(129,156,169)), lineWidth(0)
+		vresizable(false), shadow(true), height(60), left(), fillColor(ColorPLight), lineWidth(0)
 		);
 }
 
@@ -115,7 +121,7 @@ public Figure page(str title, Figure menu, Figure main, Figure footer) {
 		  	main,
 		  	footer
 	       ]),
-	  fillColor(rgb(225,226,225)), lineWidth(0), std(font("Dialog"))
+	  fillColor(ColorBackground), lineWidth(0), std(font("Dialog"))
       );
 }
 
@@ -123,9 +129,19 @@ public Figure page(str title, Figure menu, Figure main, Figure footer) {
 /* ListItem Control                 */
 /************************************/
 public Figure listItem(str label) {
-	return box(text(label), vresizable(false), height(20), left());
+	return box(text(label, left()), vresizable(false), height(20), left(), top());
 }
 
 public Figure listItem(str label, bool(int, map[KeyModifier, bool]) callback) {
-	return box(text(label), vresizable(false), height(20), left(), onMouseDown(callback));
+	return box(text(label, left(), hgrow(1.0), hresizable(false)), vresizable(false), height(20), left(), top(), onMouseDown(callback));
+}
+
+/************************************/
+/* Popup Control                    */
+/************************************/
+public FProperty popup(str t) {
+	return mouseOver(box(text(t),
+					 fillColor(ColorPopupBackground),
+					 grow(1.2),
+					 resizable(false)));
 }
