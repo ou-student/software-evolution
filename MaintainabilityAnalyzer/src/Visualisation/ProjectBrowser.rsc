@@ -72,7 +72,7 @@ private Figure createHeader(BrowseTree browseTree) {
 	}
 }
 
-private list[list[Figure]] createItems(BrowseTree browseTree) = [ createItem(c, browseTree) | c <- sort(invert(browseTree)[CurrentLocation]) ]; //, [fillColor("Orange"), fontSize(40) ]));
+private list[list[Figure]] createItems(BrowseTree browseTree) = [ createItem(c, browseTree) | c <- sort(invert(browseTree)[CurrentLocation]), c != RootLocation ];
 
 private str getLabel(loc location) {
 	str label = location.path;
