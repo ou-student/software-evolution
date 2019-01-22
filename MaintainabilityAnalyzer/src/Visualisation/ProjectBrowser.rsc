@@ -37,16 +37,21 @@ public BrowseTree createBrowseTree(set[M3] projectModels) {
 }
 
 public Figure createBrowser(BrowseTree browseTree) {	
-	return grid([
-		[createHeader(browseTree)],
-		[vscrollable(box(
-			grid(createItems(browseTree), [top()]),
-			top(),
-			left(),
-			resizable(false),
-			lineWidth(0)			
-		))]
-	]);
+	return computeFigure(bool() { return true; }, Figure() {
+		return grid([
+			[createHeader(browseTree)],
+			[vscrollable(box(
+				grid(createItems(browseTree), [top()]),
+				top(),
+				left(),
+				resizable(false),
+				lineWidth(0)			
+			))]
+		]);
+	});
+
+
+	
 }
 
 private Figure createHeader(BrowseTree browseTree) {
@@ -113,19 +118,16 @@ private map[str scheme, Figure icon] icons = (
 private list[Figure] createItem(loc location, BrowseTree browseTree) {
 	str label = getLabel(location);
 	
-	return [
-		//box(width(10), lineWidth(0), resizable(false)),
+	return [		
 	 	icons[location.scheme],
 		box(
 			text(label, left(), fontSize(12)),		
 			vresizable(false), 
 			height(24), 
 			onMouseDown(bool (int btn, map[KeyModifier,bool] modifiers) {
-				loc child = location;
+				loc child = location;				
+				CurrentLocation = child;
 				
-				CurrentLocation = child;        	
-		    	render(createBrowser(browseTree));
-		    	
 		    	return true;
 			}), 
 			lineWidth(0),
@@ -143,8 +145,7 @@ private Figure backbutton(BrowseTree browseTree) {
 		resizable(false),
 		onMouseDown(bool (int btn, map[KeyModifier,bool] modifiers) {
        		CurrentLocation = browseTree[CurrentLocation];        	
-       		render(createBrowser(browseTree));
-        	
+       		
        		return true;
     	})
 	);
