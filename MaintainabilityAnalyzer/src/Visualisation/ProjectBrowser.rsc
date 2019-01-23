@@ -34,7 +34,9 @@ private bool itemChanged = false;
 public BrowseTree createBrowseTree() {
 	BrowseTree tree = ();
 	
-	for (p <- sort(projects())) {
+	set[loc] projects = { |project://Jabberpoint-le3|, |project://smallsql0.21_src|, |project://HelloWorld| };
+	
+	for (p <- sort(projects)) {
 		println("Creating tree for <p>");
 		tree += createBrowseTree(createM3FromEclipseProject(p));	
 		println("Done.");
@@ -99,10 +101,10 @@ private str getLabel(loc location) {
 	else if (isCompilationUnit(location)) {
 		label = location.file;
 	}
-	else if (location.scheme == "project" && location.path == "/") {
+	else if (isProject(location) && location.path == "/") {
 		label = location.authority;
 	}
-	else if (location.scheme == "java+method" || location.scheme == "java+constructor") {
+	else if (isMethod(location) || isConstructor(location)) {
 		label = location.file;
 	}
 	
@@ -118,6 +120,7 @@ private Figure packageIcon = text("", iconStyle);
 private Figure projectIcon = text("", iconStyle);
 private Figure homeIcon = text("", iconStyle);
 private Figure forwardIcon = text("", [ font("Segoe MDL2 Assets"), resizable(false), size(24, 24), fontColor(rgb(38,50,56)), right()]);
+private Figure refreshIcon = text("", [ font("Segoe MDL2 Assets"), resizable(false), size(24, 24), fontColor(rgb(38,50,56)), right()]);
 
 private map[str scheme, Figure icon] icons = (
 	"java+compilationUnit":fileIcon,
@@ -134,7 +137,7 @@ private list[Figure] createItem(loc location, BrowseTree browseTree) {
 	
 	FProperty fillColor = (SelectedLocation == location) ? fillColor(rgb(176,190,197)) : fillColor(rgb(250,250,250));
 	FProperty fontColor = (SelectedLocation == location) ? fontColor("Black") : fontColor(rgb(55,71,79)); 
-	Figure icon = (location.scheme == "java+method" || location.scheme == "java+constructor") ? box(size(24, 24), resizable(false), fillColor, lineWidth(0)) : forwardIcon;
+	Figure icon = isProject(location) ? refreshIcon : box(size(24, 24), resizable(false), fillColor, lineWidth(0));
 	
 	return [	
 		box(	
@@ -142,7 +145,13 @@ private list[Figure] createItem(loc location, BrowseTree browseTree) {
 	 		lineWidth(0),
 	 		resizable(false),	 		
 	 		width(24),
-	 		fillColor
+	 		fillColor,
+	 		onMouseDown(bool (int btn, map[KeyModifier,bool] modifiers) {
+				loc child = location;				
+				CurrentLocation = child;
+				itemChanged = true;					
+				return true;
+			})
 	 	),
 		box(
 			text(label, left(), fontSize(12), fontColor),		
@@ -165,13 +174,7 @@ private list[Figure] createItem(loc location, BrowseTree browseTree) {
 			fillColor,
 	 		lineWidth(0),
 	 		resizable(false),	 		
-	 		width(48),
-	 		onMouseDown(bool (int btn, map[KeyModifier,bool] modifiers) {
-				loc child = location;				
-				CurrentLocation = child;
-				itemChanged = true;					
-				return true;
-			})
+	 		width(48)	 		
 		)	
 	];
 }
@@ -200,6 +203,8 @@ private map[loc location, loc parent] createBrowseTree(M3 model) {
 	set[loc] methods = methods(model);
 	bool useDefaultPackage = false;
 	
+	println("size packages: <size(packages)>");
+	
 	// Create a default package if there are no packages.
 	if (size(packages) == 0) {
 		loc defaultPackage = |java+package://(default%20package)| + project.authority;		
@@ -209,8 +214,8 @@ private map[loc location, loc parent] createBrowseTree(M3 model) {
 	
 	locationMap += (project:RootLocation);	
 	locationMap += (package:project | package <- packages);
-	locationMap += (unit:package | package <- packages, unit <- units, useDefaultPackage ? true : unit.path == PathNormlizationPrefix + package.path + "/" + unit.file);
-	locationMap += (m:unit | unit <- units, m <- methods, !isAnonymous(m), normalizeUnitPath(unit) == normalizeMethodPath(m)); 
+	locationMap += (unit:package | package <- packages, unit <- units, useDefaultPackage ? true : unit.path == PathNormlizationPrefix + package.path + "/" + unit.file);	
+	locationMap += (m:unit | unit <- units, m <- methods, normalizeUnitPath(unit) == normalizeMethodPath(m)); 
 	
 	return locationMap;
 }
@@ -219,11 +224,7 @@ private str packageName(str path) = substring(replaceAll(path, "/", "."), 1);
 
 private str normalizeUnitPath(loc location) {
 	str path = location.path;
-	str file = location.file;
-		
-	if (path == "/") {
-		return "/";
-	}
+	str file = location.file;	
 	
 	return substring(path, 0, findLast(path, "/")) + "/" + substring(file, 0, findLast(file, "."));
 }
