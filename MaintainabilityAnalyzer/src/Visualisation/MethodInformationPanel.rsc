@@ -78,7 +78,7 @@ public Figure methodInformationPanel() {
 							text("Complexity: ...", left()),
 							text("LOC: ...", left()),
 							text("Unitsize: ...", left()),
-							myButton("View source", void(){edit(currentMethod);})
+							myButton("View source", void(){edit(getDeclaration(currentMethod));})
 						], vsize(60), vresizable(false), justify(true))
 						
 					]),
@@ -86,6 +86,13 @@ public Figure methodInformationPanel() {
 				); 
 			}
 		);
+}
+
+private loc getDeclaration(loc location) {
+	declarations = currentModel.declarations[location];
+	if(size(declarations) > 0)
+		return getOneFrom(currentModel.declarations[location]);
+	return location;
 }
 
 Figure getGraph(){

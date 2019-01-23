@@ -20,21 +20,20 @@ import util::Editors;
 
 import List;
 import Map;
+import DateTime;
 import Set;
 import String;
 
 public loc RootLocation = |browse://root|;
-public loc BrowserLocation = RootLocation;
-private loc SelectedLocation = BrowserLocation;
+public loc CurrentLocation = RootLocation;
+public loc SelectedLocation = RootLocation;
+
 public str PathNormlizationPrefix = "/src";
 
 private M3 _currentModel = createM3FromEclipseProject(|project://smallsql|);
 
 alias BrowseTree = map[loc location, loc parent];
-
-private list[void()] actionListeners = [];
-
-public BrowseTree browseTree = ();
+private BrowseTree browseTree = ();
 
 /*****************************/
 /* Redraw panel				 */
@@ -84,18 +83,19 @@ public loc getSelectedLocation() {
 }
 
 public void pb_setLocation(loc location) {
-	if(location in browseTree){
-		SelectedLocation = location;
-		if(isMethod(location)) {
-			BrowserLocation = browseTree[location];
-		} else {
-			BrowserLocation = location;
+	if(location != SelectedLocation){
+		if(location in browseTree){
+			SelectedLocation = location;
+			CurrentLocation = browseTree[location];
+
+			redraw();
 		}
-		redraw();
 	}
 }
 
 public BrowseTree createBrowseTree(set[M3] projectModels) {
+	
+	
 	BrowseTree tree = ();
 	
 	for (model <- projectModels) {
@@ -106,24 +106,29 @@ public BrowseTree createBrowseTree(set[M3] projectModels) {
 }
 
 public Figure projectBrowser() {
+
+	// Initialize project browser
 	browseTree = createBrowseTree({_currentModel});
-	
 	pb_addNewLocationSelectedEventListener(onNewLocationSelected);
-	
+
 	return computeFigure(bool() { bool temp = _redraw; _redraw = false; return temp; }, Figure() {
-	
-		println("Current: " + BrowserLocation.path);
-		println("Selected: " + SelectedLocation.path);
-	
-	    return box(vcat([
-		box(createHeader(), vsize(20), vresizable(false)),
-		box(vscrollable(createItems(), top()), std(fontSize(9)), lineWidth(0), top())		
-	]), std(font("Dialog")), lineWidth(0));
-	});
+		return grid([
+			[createHeader()],
+			[vscrollable(box(
+				grid(createItems(), [top()]),
+				std(fontColor(rgb(55,71,79))),
+				top(),
+				left(),
+				resizable(false),
+				lineWidth(0)			
+			)
+			)]
+		]);
+	});	
 }
 
 private Figure createHeader() {
-	if (BrowserLocation == RootLocation) {
+	if (CurrentLocation == RootLocation) {
 		int projectCount = size({ p | p <- invert(browseTree)[RootLocation], p != RootLocation });
 		
 		return box(
@@ -132,20 +137,20 @@ private Figure createHeader() {
 		);
 	}
 	else {
-		str label = getLabel(BrowserLocation);
+		str label = getLabel(CurrentLocation);
 		
 		return box(hcat([
 			backbutton(),	
-			box(width(10), resizable(false)),		
+			box(width(10), resizable(false), lineWidth(0)),		
 			box(
 				text(label, left(), size(20, 20), resizable(false), fontColor("white"), fontBold(true)),
 				vresizable(false), height(40), lineWidth(0), fillColor(rgb(84,110,122))
 			)
-		]), left(), std(fillColor(rgb(84,110,122))), std(fontColor("White")));
+		]), left(), vresizable(false), lineWidth(0), height(40), std(fillColor(rgb(84,110,122))), std(fontColor("White")));
 	}
 }
 
-private Figure createItems() = vcat([ createItem(c) | c <- sort(invert(browseTree)[BrowserLocation]) ], vresizable(false), top());
+private list[list[Figure]] createItems() = [ createItem(c) | c <- sort(invert(browseTree)[CurrentLocation]), c != RootLocation ];
 
 private str getLabel(loc location) {
 	str label = location.path;
@@ -160,58 +165,90 @@ private str getLabel(loc location) {
 		label = location.authority;
 	}
 	else if (isMethod(location)) {
-		label = /^<n:.*>\(.*$/ := location.file ? n : location.file;
-		label += "()";
+		//label = /^<n:.*>\(.*$/ := location.file ? n : location.file;
+		//label += "()";
+		label = location.file;
 	}
 	
 	return label;
 }
 
-private Figure createItem(loc location) {
 
+private list[FProperty] iconStyle = [ font("Segoe MDL2 Assets"), resizable(false), size(24, 24) ];
+
+private Figure constructorIcon = text("", iconStyle);
+private Figure methodIcon = text("", iconStyle);
+private Figure fileIcon = text("", iconStyle);
+private Figure packageIcon = text("", iconStyle);
+private Figure projectIcon = text("", iconStyle);
+private Figure homeIcon = text("", iconStyle);
+private Figure forwardIcon = text("", [ font("Segoe MDL2 Assets"), resizable(false), size(24, 24), fontColor(rgb(38,50,56)), right()]);
+
+private map[str scheme, Figure icon] icons = (
+	"java+compilationUnit":fileIcon,
+	"java+package":packageIcon,
+	"java+method":methodIcon,
+	"java+constructor":constructorIcon,
+	"project":projectIcon,
+	"browse":homeIcon
+);
+
+
+private list[Figure] createItem(loc location) {
 	str label = getLabel(location);
 	
-	return listItem(label, itemClickHandler(location));
+	//return listItem(label, itemClickHandler(location));
+	FProperty fillColor = (SelectedLocation == location) ? fillColor(rgb(176,190,197)) : fillColor(rgb(250,250,250));
+	FProperty fontColor = (SelectedLocation == location) ? fontColor("Black") : fontColor(rgb(55,71,79)); 
+	Figure icon = (location.scheme == "java+method" || location.scheme == "java+constructor") ? box(size(24, 24), resizable(false), fillColor, lineWidth(0)) : forwardIcon;
 	
-	//return hcat(
-	//[
-	//	box(width(10), lineWidth(0), resizable(false)), 
-	//	box(
-	//		text(label, left(), fontSize(12)),		
-	//		vresizable(false), 
-	//		height(24), 
-	//		onMouseDown(bool (int btn, map[KeyModifier,bool] modifiers) {
-	//			loc child = location;
-	//			if(isMethod(child)) {
-	//				println(child);
-	//				edit(child);
-	//			}
-	//			else {
-	//				
-	//				BrowserLocation = child;        	
-	//				redraw();
-	//			}
-	//	    	
-	//	    	return true;
-	//		})
-	//	,lineWidth(0))
-	//], vsize(24), vresizable(false));
+	return [	
+		box(	
+	 		icons[location.scheme],
+	 		lineWidth(0),
+	 		resizable(false),	 		
+	 		width(24),
+	 		fillColor
+	 	),
+		box(
+			text(label, left(), fontSize(12), fontColor),		
+			vresizable(false),
+			hresizable(true), 
+			height(24), 
+			onMouseDown(itemSelectHandler(location)), 
+			lineWidth(0),	
+			width(450),		
+			top(),			
+			fillColor
+		),
+		box(
+			icon,
+			fillColor,
+	 		lineWidth(0),
+	 		resizable(false),	 		
+	 		width(48),
+	 		onMouseDown(itemNavigateHandler(location))
+		)	
+	];
 }
 
-private bool(int, map[KeyModifier,bool]) itemClickHandler(loc location) = bool(int btn, map[KeyModifier,bool] mdf) {
+private bool(int, map[KeyModifier,bool]) itemSelectHandler(loc location) = bool(int btn, map[KeyModifier,bool] mdf) {
 	if(btn == 1) {
 		newLocationSelected(_currentModel, location);
-		//if(isMethod(location)){
-		//	pb_setLocation(location);
-		//	SelectedLocation = location;
-		//} else {
-		//	BrowserLocation = location;
-		//}
-		//projectBrowserUpdate();		
 	}
 
 	return true;
 }; 
+
+private bool(int, map[KeyModifier,bool]) itemNavigateHandler(loc location) = bool(int btn, map[KeyModifier,bool] mdf) {
+	if(btn == 1) {
+		CurrentLocation = location;
+		redraw();
+	}
+
+	return true;
+}; 
+
 
 private Figure backbutton() {
 	return box(
@@ -220,8 +257,8 @@ private Figure backbutton() {
 		left(),
 		resizable(false),
 		onMouseDown(bool (int btn, map[KeyModifier,bool] modifiers) {
-			newLocationSelected(_currentModel, browseTree[BrowserLocation]);
-        	
+			newLocationSelected(_currentModel, CurrentLocation);
+			
        		return true;
     	})
 	);
