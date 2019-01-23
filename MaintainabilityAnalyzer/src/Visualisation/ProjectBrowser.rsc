@@ -117,7 +117,7 @@ public Figure projectBrowser() {
 	
 	    return box(vcat([
 		box(createHeader(), vsize(20), vresizable(false)),
-		box(vscrollable(createItems()), std(fontSize(9)), lineWidth(0))		
+		box(vscrollable(createItems(), top()), std(fontSize(9)), lineWidth(0), top())		
 	]), std(font("Dialog")), lineWidth(0));
 	});
 }
@@ -145,7 +145,7 @@ private Figure createHeader() {
 	}
 }
 
-private Figure createItems() = vcat([ createItem(c) | c <- sort(invert(browseTree)[BrowserLocation]) ]);
+private Figure createItems() = vcat([ createItem(c) | c <- sort(invert(browseTree)[BrowserLocation]) ], vresizable(false), top());
 
 private str getLabel(loc location) {
 	str label = location.path;
