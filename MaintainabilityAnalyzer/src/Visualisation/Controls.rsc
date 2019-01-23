@@ -129,11 +129,11 @@ public Figure page(str title, Figure menu, Figure main, Figure footer) {
 /* ListItem Control                 */
 /************************************/
 public Figure listItem(str label) {
-	return box(text(label, left()), vresizable(false), height(20), left(), top());
+	return box(text(label, left()), vresizable(false), hgap(10),height(20), left());
 }
 
 public Figure listItem(str label, bool(int, map[KeyModifier, bool]) callback) {
-	return box(text(label, left(), hgrow(1.0), hresizable(false)), vresizable(false), height(20), left(), top(), onMouseDown(callback));
+	return box(text(label, left(), hgrow(1.0), hresizable(false)), vresizable(false),hgap(10), height(20), left(), onMouseDown(callback));
 }
 
 /************************************/
