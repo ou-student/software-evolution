@@ -19,6 +19,7 @@ import DateTime;
 import Set;
 import String;
 import lang::java::jdt::m3::Core;
+import Utils::CoreExtension;
 
 public loc RootLocation = |browse://root|;
 public loc CurrentLocation = RootLocation;
@@ -28,23 +29,23 @@ public str PathNormlizationPrefix = "/src";
 
 alias BrowseTree = map[loc location, loc parent];
 
-private datetime clicked;
-private bool firstClick = true;
+private bool itemChanged = false;
 
-public BrowseTree createBrowseTree(set[M3] projectModels) {
-	
-	
+public BrowseTree createBrowseTree() {
 	BrowseTree tree = ();
 	
-	for (model <- projectModels) {
-		tree += createBrowseTree(model);	
+	for (p <- sort(projects())) {
+		println("Creating tree for <p>");
+		tree += createBrowseTree(createM3FromEclipseProject(p));	
+		println("Done.");
+		println();
 	}	
 	
 	return tree;
 }
 
 public Figure createBrowser(BrowseTree browseTree) {
-	return computeFigure(bool() { return true; }, Figure() {
+	return computeFigure(bool() { bool temp = itemChanged; itemChanged = false; return temp; }, Figure() {
 		return grid([
 			[createHeader(browseTree)],
 			[vscrollable(box(
@@ -54,8 +55,7 @@ public Figure createBrowser(BrowseTree browseTree) {
 				left(),
 				resizable(false),
 				lineWidth(0)			
-			)
-			)]
+			))]
 		]);
 	});	
 }
@@ -88,10 +88,15 @@ private list[list[Figure]] createItems(BrowseTree browseTree) = [ createItem(c, 
 private str getLabel(loc location) {
 	str label = location.path;
 	
-	if (location.scheme == "java+package") {
-		label = packageName(location.path);
+	if (isPackage(location)) {		
+		if (location.authority == "(default package)") {
+			label = "(default package)";
+		}
+		else {
+			label = packageName(location.path);
+		}
 	}
-	else if (location.scheme == "java+compilationUnit") {
+	else if (isCompilationUnit(location)) {
 		label = location.file;
 	}
 	else if (location.scheme == "project" && location.path == "/") {
@@ -145,9 +150,9 @@ private list[Figure] createItem(loc location, BrowseTree browseTree) {
 			hresizable(true), 
 			height(24), 
 			onMouseDown(bool (int btn, map[KeyModifier,bool] modifiers) {
-				loc child = location;				
-				SelectedLocation = child;
-					
+				loc child = location;	
+				SelectedLocation = child;				
+				itemChanged = true;
 				return true;
 			}), 
 			lineWidth(0),	
@@ -164,7 +169,7 @@ private list[Figure] createItem(loc location, BrowseTree browseTree) {
 	 		onMouseDown(bool (int btn, map[KeyModifier,bool] modifiers) {
 				loc child = location;				
 				CurrentLocation = child;
-					
+				itemChanged = true;					
 				return true;
 			})
 		)	
@@ -179,7 +184,8 @@ private Figure backbutton(BrowseTree browseTree) {
 		left(),
 		resizable(false),
 		onMouseDown(bool (int btn, map[KeyModifier,bool] modifiers) {
-       		CurrentLocation = browseTree[CurrentLocation];        	
+       		CurrentLocation = browseTree[CurrentLocation];   
+       		itemChanged = true;     	
        		
        		return true;
     	})
@@ -192,11 +198,19 @@ private map[loc location, loc parent] createBrowseTree(M3 model) {
 	set[loc] packages = packages(model);
 	set[loc] units = files(model);
 	set[loc] methods = methods(model);
+	bool useDefaultPackage = false;
+	
+	// Create a default package if there are no packages.
+	if (size(packages) == 0) {
+		loc defaultPackage = |java+package://(default%20package)| + project.authority;		
+		packages += { defaultPackage };
+		useDefaultPackage = true;
+	}
 	
 	locationMap += (project:RootLocation);	
 	locationMap += (package:project | package <- packages);
-	locationMap += (unit:package | package <- packages, unit <- units, unit.path == PathNormlizationPrefix + package.path + "/" + unit.file);
-	locationMap += (m:unit | unit <- units, m <- methods, normalizeUnitPath(unit) == normalizeMethodPath(m)); 
+	locationMap += (unit:package | package <- packages, unit <- units, useDefaultPackage ? true : unit.path == PathNormlizationPrefix + package.path + "/" + unit.file);
+	locationMap += (m:unit | unit <- units, m <- methods, !isAnonymous(m), normalizeUnitPath(unit) == normalizeMethodPath(m)); 
 	
 	return locationMap;
 }
@@ -206,6 +220,10 @@ private str packageName(str path) = substring(replaceAll(path, "/", "."), 1);
 private str normalizeUnitPath(loc location) {
 	str path = location.path;
 	str file = location.file;
+		
+	if (path == "/") {
+		return "/";
+	}
 	
 	return substring(path, 0, findLast(path, "/")) + "/" + substring(file, 0, findLast(file, "."));
 }
