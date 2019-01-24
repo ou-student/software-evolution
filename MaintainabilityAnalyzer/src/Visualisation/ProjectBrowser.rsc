@@ -25,6 +25,8 @@ public loc RootLocation = |browse://root|;
 public loc CurrentLocation = RootLocation;
 public loc SelectedLocation = RootLocation;
 
+public Results CurrentResults;
+
 public str PathNormlizationPrefix = "/src";
 
 alias BrowseTree = map[loc location, loc parent];
@@ -34,13 +36,13 @@ private bool itemChanged = false;
 public BrowseTree createBrowseTree() {
 	BrowseTree tree = ();
 	
-	set[loc] projects = { |project://Jabberpoint-le3|, |project://smallsql0.21_src|, |project://HelloWorld| };
+	set[loc] projects = { |project://Jabberpoint-le3|, |project://HelloWorld| };
 	
 	for (p <- sort(projects)) {
-		println("Creating tree for <p>");
+		//println("Creating tree for <p>");
 		tree += createBrowseTree(createM3FromEclipseProject(p));	
-		println("Done.");
-		println();
+		////println("Done.");
+		//println();
 	}	
 	
 	return tree;
@@ -174,7 +176,20 @@ private list[Figure] createItem(loc location, BrowseTree browseTree) {
 			fillColor,
 	 		lineWidth(0),
 	 		resizable(false),	 		
-	 		width(48)	 		
+	 		width(48),
+	 		onMouseDown(bool (int btn, map[KeyModifier,bool] modifiers) {
+				Figure currentIcon = icon;	
+				
+				if (currentIcon == refreshIcon) {
+					println("Refresh! <SelectedLocation>");
+					
+					CurrentResults = run(SelectedLocation);					
+					
+					println(CurrentResults);
+				}				
+				//itemChanged = true;
+				return true;
+			})	 		
 		)	
 	];
 }
@@ -202,9 +217,7 @@ private map[loc location, loc parent] createBrowseTree(M3 model) {
 	set[loc] units = files(model);
 	set[loc] methods = methods(model);
 	bool useDefaultPackage = false;
-	
-	println("size packages: <size(packages)>");
-	
+		
 	// Create a default package if there are no packages.
 	if (size(packages) == 0) {
 		loc defaultPackage = |java+package://(default%20package)| + project.authority;		
@@ -215,7 +228,7 @@ private map[loc location, loc parent] createBrowseTree(M3 model) {
 	locationMap += (project:RootLocation);	
 	locationMap += (package:project | package <- packages);
 	locationMap += (unit:package | package <- packages, unit <- units, useDefaultPackage ? true : unit.path == PathNormlizationPrefix + package.path + "/" + unit.file);	
-	locationMap += (m:unit | unit <- units, m <- methods, normalizeUnitPath(unit) == normalizeMethodPath(m)); 
+	locationMap += (m:unit | unit <- units, m <- methods, normalizeUnitPath(unit) == normalizeMethodPath(m));
 	
 	return locationMap;
 }
@@ -235,7 +248,7 @@ private str normalizeMethodPath(loc location) {
 	return PathNormlizationPrefix + substring(path, 0, findLast(path, "/"));
 }
 
-private &T cast(type[&T] t, value x) {
+public &T cast(type[&T] t, value x) {
   	if (&T e := x) { 
     	return e;
  	}

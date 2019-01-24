@@ -62,13 +62,24 @@ alias Results = tuple[VolumeAnalysisResult 		volume,
 					  ComplexityAnalysisResult	complexity,
 					  DuplicationAnalysisResult duplicates,
 					  MaintainabilityScore 		score];
-					  
-
 
 public tuple[str analyzability, str changeability, str stability, str testability] MaintainabilityAspects = <"Analyzability", "Changeability", "Stability", "Testability">;
 
 alias MetricRankings = tuple[Rank volume, Rank complexity, Rank duplication, Rank unitSize, Rank testing];
 
 alias MaintainabilityScore = tuple[Rank overall,  map[str aspect, Rank rank] aspects];
+
+public Results EmptyResults = <
+	<RankingUnknown, 0, 0, 0, 0, {}>,
+	<RankingUnknown, (), 0>,
+	<RankingUnknown, (), 0>,
+	<RankingUnknown, 0, 0, 0>,
+	<RankingUnknown, (
+		MaintainabilityAspects.analyzability:RankingUnknown,
+		MaintainabilityAspects.changeability:RankingUnknown,
+		MaintainabilityAspects.testability:RankingUnknown,
+		MaintainabilityAspects.stability:RankingUnknown
+	)>
+>;
 					  
 					  
