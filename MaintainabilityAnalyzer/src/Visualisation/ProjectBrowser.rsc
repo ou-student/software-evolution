@@ -23,6 +23,7 @@ import Map;
 import DateTime;
 import Set;
 import String;
+import Utils::CoreExtension;
 
 private loc RootLocation = |browse://root|;
 private loc CurrentLocation = RootLocation;
@@ -104,15 +105,18 @@ public void pb_setLocation(loc location) {
 	}
 }
 
-public BrowseTree createBrowseTree(set[M3] projectModels) {
-	
-	
+public BrowseTree createBrowseTree() {
 	BrowseTree tree = ();
 	
-	for (model <- projectModels) {
-		tree += createBrowseTree(model);	
-	}
-
+set[loc] projects = { |project://Jabberpoint-le3|, |project://smallsql0.21_src|, |project://HelloWorld| };
+	
+	for (p <- sort(projects)) {
+		println("Creating tree for <p>");
+		tree += createBrowseTree(createM3FromEclipseProject(p));	
+		println("Done.");
+		println();
+	}	
+	
 	return tree;
 }
 
@@ -132,8 +136,7 @@ public Figure projectBrowser() {
 				left(),
 				resizable(false),
 				lineWidth(0)			
-			)
-			)]
+			))]
 		]);
 	});	
 }
@@ -166,16 +169,21 @@ private list[list[Figure]] createItems() = [ createItem(c) | c <- sort(invert(br
 private str getLabel(loc location) {
 	str label = location.path;
 	
-	if (location.scheme == "java+package") {
-		label = packageName(location.path);
+	if (isPackage(location)) {		
+		if (location.authority == "(default package)") {
+			label = "(default package)";
+		}
+		else {
+			label = packageName(location.path);
+		}
 	}
-	else if (location.scheme == "java+compilationUnit") {
+	else if (isCompilationUnit(location)) {
 		label = location.file;
 	}
-	else if (location.scheme == "project" && location.path == "/") {
+	else if (isProject(location) && location.path == "/") {
 		label = location.authority;
 	}
-	else if (isMethod(location)) {
+	else if (isMethod(location) || isConstructor(location)) {
 		//label = /^<n:.*>\(.*$/ := location.file ? n : location.file;
 		//label += "()";
 		label = location.file;
@@ -194,6 +202,7 @@ private Figure packageIcon = text("", iconStyle);
 private Figure projectIcon = text("", iconStyle);
 private Figure homeIcon = text("", iconStyle);
 private Figure forwardIcon = text("", [ font("Segoe MDL2 Assets"), resizable(false), size(24, 24), fontColor(rgb(38,50,56)), right()]);
+private Figure refreshIcon = text("", [ font("Segoe MDL2 Assets"), resizable(false), size(24, 24), fontColor(rgb(38,50,56)), right()]);
 
 private map[str scheme, Figure icon] icons = (
 	"java+compilationUnit":fileIcon,
@@ -211,7 +220,7 @@ private list[Figure] createItem(loc location) {
 	//return listItem(label, itemClickHandler(location));
 	FProperty fillColor = (SelectedLocation == location) ? fillColor(rgb(176,190,197)) : fillColor(rgb(250,250,250));
 	FProperty fontColor = (SelectedLocation == location) ? fontColor("Black") : fontColor(rgb(55,71,79)); 
-	Figure icon = (location.scheme == "java+method" || location.scheme == "java+constructor") ? box(size(24, 24), resizable(false), fillColor, lineWidth(0)) : forwardIcon;
+	Figure icon = isProject(location) ? refreshIcon : box(size(24, 24), resizable(false), fillColor, lineWidth(0));
 	
 	return [	
 		box(	
@@ -219,7 +228,8 @@ private list[Figure] createItem(loc location) {
 	 		lineWidth(0),
 	 		resizable(false),	 		
 	 		width(24),
-	 		fillColor
+	 		fillColor,
+	 		onMouseDown(itemNavigateHandler(location))
 	 	),
 		box(
 			text(label, left(), fontSize(12), fontColor),		
@@ -236,9 +246,8 @@ private list[Figure] createItem(loc location) {
 			icon,
 			fillColor,
 	 		lineWidth(0),
-	 		resizable(false),	 		
-	 		width(48),
-	 		onMouseDown(itemNavigateHandler(location))
+	 		resizable(false),
+	 		width(48)	 		
 		)	
 	];
 }
@@ -286,10 +295,20 @@ private map[loc location, loc parent] createBrowseTree(M3 model) {
 	set[loc] packages = packages(model);
 	set[loc] units = files(model);
 	set[loc] methods = methods(model);
+	bool useDefaultPackage = false;
+	
+	println("size packages: <size(packages)>");
+	
+	// Create a default package if there are no packages.
+	if (size(packages) == 0) {
+		loc defaultPackage = |java+package://(default%20package)| + project.authority;		
+		packages += { defaultPackage };
+		useDefaultPackage = true;
+	}
 	
 	locationMap += (project:RootLocation);	
 	locationMap += (package:project | package <- packages);
-	locationMap += (unit:package | package <- packages, unit <- units, unit.path == PathNormlizationPrefix + package.path + "/" + unit.file);
+	locationMap += (unit:package | package <- packages, unit <- units, useDefaultPackage ? true : unit.path == PathNormlizationPrefix + package.path + "/" + unit.file);	
 	locationMap += (m:unit | unit <- units, m <- methods, normalizeUnitPath(unit) == normalizeMethodPath(m)); 
 	
 	return locationMap;
@@ -299,7 +318,7 @@ private str packageName(str path) = substring(replaceAll(path, "/", "."), 1);
 
 private str normalizeUnitPath(loc location) {
 	str path = location.path;
-	str file = location.file;
+	str file = location.file;	
 	
 	return substring(path, 0, findLast(path, "/")) + "/" + substring(file, 0, findLast(file, "."));
 }
