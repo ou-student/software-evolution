@@ -33,6 +33,9 @@ public str PathNormlizationPrefix = "/src";
 
 private M3 _currentModel = createM3FromEclipseProject(|project://smallsql|);
 
+alias ProjectModels = map[loc project, M3 model];
+private ProjectModels projectModels = ();
+
 alias BrowseTree = map[loc location, loc parent];
 private BrowseTree browseTree = ();
 
@@ -108,11 +111,13 @@ public void pb_setLocation(loc location) {
 public BrowseTree createBrowseTree() {
 	BrowseTree tree = ();
 	
-set[loc] projects = { |project://Jabberpoint-le3|, |project://smallsql0.21_src|, |project://HelloWorld| };
+	set[loc] projects = { |project://JabberPoint/|, |project://smallsql| };
 	
 	for (p <- sort(projects)) {
+		println("Creating M3 for <p>");
+		projectModels[p] = createM3FromEclipseProject(p);
 		println("Creating tree for <p>");
-		tree += createBrowseTree(createM3FromEclipseProject(p));	
+		tree += createBrowseTree(projectModels[p]);	
 		println("Done.");
 		println();
 	}	
@@ -123,7 +128,7 @@ set[loc] projects = { |project://Jabberpoint-le3|, |project://smallsql0.21_src|,
 public Figure projectBrowser() {
 
 	// Initialize project browser
-	browseTree = createBrowseTree({_currentModel});
+	browseTree = createBrowseTree();
 	pb_addNewLocationSelectedEventListener(onNewLocationSelected);
 
 	return computeFigure(shouldRedraw, Figure() {
@@ -254,7 +259,7 @@ private list[Figure] createItem(loc location) {
 
 private bool(int, map[KeyModifier,bool]) itemSelectHandler(loc location) = bool(int btn, map[KeyModifier,bool] mdf) {
 	if(btn == 1) {
-		newLocationSelected(_currentModel, location);
+		newLocationSelected(projectModels[getProjectOfLocation(location)], location);
 	}
 
 	return true;
@@ -312,6 +317,12 @@ private map[loc location, loc parent] createBrowseTree(M3 model) {
 	locationMap += (m:unit | unit <- units, m <- methods, normalizeUnitPath(unit) == normalizeMethodPath(m)); 
 	
 	return locationMap;
+}
+
+private loc getProjectOfLocation(loc location){
+	if(isProject(location)) return location;
+	
+	return getProjectOfLocation(browseTree[location]);
 }
 
 private str packageName(str path) = substring(replaceAll(path, "/", "."), 1);
