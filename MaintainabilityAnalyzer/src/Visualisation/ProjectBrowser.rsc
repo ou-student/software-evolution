@@ -24,9 +24,9 @@ import DateTime;
 import Set;
 import String;
 
-public loc RootLocation = |browse://root|;
-public loc CurrentLocation = RootLocation;
-public loc SelectedLocation = RootLocation;
+private loc RootLocation = |browse://root|;
+private loc CurrentLocation = RootLocation;
+private loc SelectedLocation = RootLocation;
 
 public str PathNormlizationPrefix = "/src";
 
@@ -36,10 +36,18 @@ alias BrowseTree = map[loc location, loc parent];
 private BrowseTree browseTree = ();
 
 /*****************************/
+/* Initializer				 */
+/*****************************/
+public void pb_initialize() {
+	pb_setLocation(RootLocation);
+}
+
+/*****************************/
 /* Redraw panel				 */
 /*****************************/
 private bool _redraw = false;
 private void redraw() { _redraw = true; }
+private bool shouldRedraw() { bool temp = _redraw; _redraw = false; return temp; }
 
 /*****************************/
 /* New Location Selected event */
@@ -87,6 +95,9 @@ public void pb_setLocation(loc location) {
 		if(location in browseTree){
 			SelectedLocation = location;
 			CurrentLocation = browseTree[location];
+			
+			println("SelectedLocation: <SelectedLocation>");
+			println("CurrentLocation: <CurrentLocation>");
 
 			redraw();
 		}
@@ -111,7 +122,7 @@ public Figure projectBrowser() {
 	browseTree = createBrowseTree({_currentModel});
 	pb_addNewLocationSelectedEventListener(onNewLocationSelected);
 
-	return computeFigure(bool() { bool temp = _redraw; _redraw = false; return temp; }, Figure() {
+	return computeFigure(shouldRedraw, Figure() {
 		return grid([
 			[createHeader()],
 			[vscrollable(box(
@@ -256,13 +267,18 @@ private Figure backbutton() {
 		lineWidth(0),
 		left(),
 		resizable(false),
-		onMouseDown(bool (int btn, map[KeyModifier,bool] modifiers) {
-			newLocationSelected(_currentModel, CurrentLocation);
-			
-       		return true;
-    	})
+		onMouseDown(backButtonClickHandler())
 	);
 }
+
+private bool(int, map[KeyModifier,bool]) backButtonClickHandler() = bool(int btn, map[KeyModifier,bool] mdf) {
+	if(btn == 1) {
+		CurrentLocation = browseTree[CurrentLocation];
+		redraw();
+	}
+
+	return true;
+}; 
 
 private map[loc location, loc parent] createBrowseTree(M3 model) {
 	map[loc, loc] locationMap = (RootLocation:RootLocation);	

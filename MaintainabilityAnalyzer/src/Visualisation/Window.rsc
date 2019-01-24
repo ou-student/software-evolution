@@ -12,25 +12,21 @@ import Main;
 
 import Visualisation::ProjectBrowser;
 import Visualisation::MethodInformationPanel;
+import Visualisation::ComplexityTreemapPanel;
 import Visualisation::Controls;
 
 import lang::java::jdt::m3::Core;
 import analysis::graphs::Graph;
 
-//UnitInfos r = {};
-loc selectedProject = |project://JabberPoint/|;
-
-data DataSet = complexitySet(bool changed, UnitInfos ui, str label);
-DataSet complexityData = complexitySet(false, {}, "");
-
-
 private loc currentSelectedMethod;
+private int currentIndex = 0;
 
 void onPBNewLocationSelected(M3 model, loc location) {
 	if(isMethod(location)){
 		mip_setCurrentMethod(model, location);
+		currentIndex = 1;
 	} else {
-		mip_clearMethodInformationPanel();
+		currentIndex = 2;
 	}
 }
 
@@ -45,6 +41,8 @@ void onMIPNewMethodSelected(loc method) {
 
 void begin() {
 
+	pb_initialize();
+
 	pb_addNewLocationSelectedEventListener(onPBNewLocationSelected);
 	mip_addNewMethodSelectedEventListener(onMIPNewMethodSelected);
 	
@@ -55,23 +53,30 @@ void begin() {
 	render(
 		page("Maintainance Analyzer",
 			 menu,
-			 createMain(panel(projectBrowser(), "", 0), methodInformationPanel()/*, getTreemapPanel()*/),
+			 createMain(
+			 	panel(projectBrowser(), "", 0),
+				 	fswitch(int(){return currentIndex;},[
+				 		panel(text("Select a project in the browser on the left to start", center()), "Welcome to the Maintainability Analyzer"),
+				 		methodInformationPanel(),
+				 		complexityTreemapPanel()
+				 	])
+				 ),
 			 footer("Copyright by A. Walgreen & E. Postma ©2019\t")
 		)
 	);
 }
 
-private Figure getTreemapPanel() {
-	return computeFigure(bool() { bool temp = complexityData.changed; complexityData.changed = false; return temp; }, Figure() {
-		Figures boxes = [];
-		if(size(complexityData.ui) > 0) {
-			cscale = colorScale([s.complexity | s <- complexityData.ui], color("green"),color("red"));
-			boxes = [createTreemapBox(s, cscale(s.complexity)) | s <- complexityData.ui ];
-		}
-		
-		return panel(treemap(boxes, lineWidth(0)), complexityData.label, 0);
-	});
-}
+//private Figure getTreemapPanel() {
+//	return computeFigure(bool() { bool temp = complexityData.changed; complexityData.changed = false; return temp; }, Figure() {
+//		Figures boxes = [];
+//		if(size(complexityData.ui) > 0) {
+//			cscale = colorScale([s.complexity | s <- complexityData.ui], color("green"),color("red"));
+//			boxes = [createTreemapBox(s, cscale(s.complexity)) | s <- complexityData.ui ];
+//		}
+//		
+//		return panel(treemap(boxes, lineWidth(0)), complexityData.label, 0);
+//	});
+//}
 
 private void clear() {
 	complexityData = complexitySet(true, {}, "");

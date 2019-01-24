@@ -18,6 +18,7 @@ private loc currentMethod = |unknown:///|;
 /*****************************/
 private bool _redraw = false;
 private void redraw() { _redraw = true; }
+private bool shouldRedraw() { bool temp = _redraw; _redraw = false; return temp; }
 
 /*****************************/
 /* New Method Selected event */
@@ -68,7 +69,7 @@ public Figure methodInformationPanel() {
 	mip_addNewMethodSelectedEventListener(onNewMethodSelected);
 
 	return computeFigure(
-			bool() { bool temp = _redraw; _redraw = false; return temp;},
+			shouldRedraw,
 			Figure() { 			
 				return panel(
 					vcat([
