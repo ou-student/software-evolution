@@ -14,6 +14,19 @@ private M3 currentModel = m3(|unknown:///|);
 private loc currentMethod = |unknown:///|;
 
 /*****************************/
+/* Initializer				 */
+/*****************************/
+private bool _isInitialized = false;
+
+public void mip_initialize() {
+	if(!_isInitialized) {
+		mip_addNewMethodSelectedEventListener(onNewMethodSelected);		
+		
+		_isInitialized = true;
+	}
+}
+
+/*****************************/
 /* Redraw panel				 */
 /*****************************/
 private bool _redraw = false;
@@ -66,7 +79,7 @@ public void mip_clearMethodInformationPanel() {
 }
 
 public Figure methodInformationPanel() {
-	mip_addNewMethodSelectedEventListener(onNewMethodSelected);
+	mip_initialize();
 
 	return computeFigure(
 			shouldRedraw,
