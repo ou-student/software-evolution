@@ -7,20 +7,9 @@ import Set;
 import Map;
 import String;
 
-private Figure veryLowIcon = box(text("", [ font("Segoe MDL2 Assets"), resizable(false), size(24, 24), fontColor("Red")]), right(), height(22));
-private Figure lowIcon = text("", [ font("Segoe MDL2 Assets"), resizable(false), size(24, 24), fontColor("Orange"), right(), height(22)]);
-private Figure moderateIcon = text("", [ font("Segoe MDL2 Assets"), resizable(false), size(24, 24), fontColor("Yellow"), right(), height(22)]);
-private Figure highIcon = box(text("", [ font("Segoe MDL2 Assets"), resizable(false), size(24, 24), fontColor("LightGreen"), right(), height(22)]));
-private Figure veryHighIcon = box(text("", [ font("Segoe MDL2 Assets"), resizable(false), size(24, 24), fontColor("Green"), right(), height(22)]));
-
-private map[Rank, Figure] icons = (
-	Rankings.veryLow:veryLowIcon,
-	Rankings.low:lowIcon,
-	Rankings.moderate:moderateIcon,
-	Rankings.high:highIcon,
-	Rankings.veryHigh:veryHighIcon
-);
-
+/**
+ * Defines the rank fill colors.
+ */
 private map[Rank, FProperty] rankColors = (
 	Rankings.veryLow:fillColor("Red"),
 	Rankings.low:fillColor("Orange"),
@@ -30,6 +19,9 @@ private map[Rank, FProperty] rankColors = (
 	RankingUnknown:fillColor("White")
 );
 
+/**
+ * Defines the rank font colors.
+ */
 private map[Rank, FProperty] rankFontColors = (
 	Rankings.veryLow:fontColor("White"),
 	Rankings.low:fontColor("Black"),
@@ -39,9 +31,15 @@ private map[Rank, FProperty] rankFontColors = (
 	RankingUnknown:fontColor("Black")
 );
 
-private list[FProperty] fontStyle = [ fontSize(11), left(), vresizable(false), height(22) ];
-
+/**
+ * Default label width.
+ */
 private int labelWidth = 350;
+
+/**
+ * Default font style.
+ */
+private list[FProperty] fontStyle = [ fontSize(11), left(), vresizable(false), height(22) ];
 
 private Figure label(Rank rank) = box(text(rank.label), left(), width(labelWidth));
 
@@ -51,29 +49,29 @@ private Figure label(str label, list[FProperty] styles) = box(text(label, fontSt
 
 private Figure rank(Rank rank) = box(text(rank.rank), left(), width(labelWidth));
 
-private Figure icon(Rank rank) {
-	FProperty fontColor = (rank == Rankings.low || rank == Rankings.moderate || rank == RankingUnknown) ? fontColor("Black") : fontColor("White");
-	
-	return box(text(rank.rank, fontBold(true), fontColor), rankColors[rank], width(30));
-}
+private Figure icon(Rank rank) = box(text(rank.rank, fontBold(true), rankFontColors[rank]), rankColors[rank], width(30));
 
-
+/**
+ * Creates a figure representing the specified risk category and risk evaluation.
+ */
 private Figure riskCategory(RiskCategory riskCategory, RiskEvaluation evaluation) {
 	Figure figure;
+	str text;
 	
 	if (riskCategory in evaluation) {
 		RiskValues values = evaluation[riskCategory];
-		str text = "<left(riskCategory.risk + " (" + riskCategory.category + ")", 30)> <values.percentage> % (totalling <values.linesOfCode> lines of code in <size(values.units)> units)";
-		
-		figure = label(text, [font("Consolas"), fontSize(10)]);
+		text = "<left(riskCategory.risk + " (" + riskCategory.category + ")", 30)> <values.percentage> % (totalling <values.linesOfCode> lines of code in <size(values.units)> units)";
 	}
 	else {
-		figure = label("<riskCategory.category> N/A");
+		text = "<left(riskCategory.risk + " (" + riskCategory.category + ")", 30)> 0.00 %";		
 	}
 	
-	return figure;	
+	return label(text, [font("Consolas"), fontSize(10)]);
 }
 
+/**
+ * Creates a Figure representing the ranking icon for the specified VolumeAnalysisResult.
+ */
 private Figure icon(VolumeAnalysisResult result) {
 	Rank rank = result.ranking;	
 	
@@ -91,6 +89,9 @@ private Figure icon(VolumeAnalysisResult result) {
 	return box(text(rank.rank, fontBold(true), rankFontColors[rank]), rankColors[rank], width(30), popup(content));
 }
 
+/**
+ * Creates a Figure representing the ranking icon for the specified UnitSizeAnalysisResult.
+ */
 private Figure icon(UnitSizeAnalysisResult result) {
 	Rank rank = result.ranking;
 	
@@ -109,6 +110,9 @@ private Figure icon(UnitSizeAnalysisResult result) {
 	return box(text(rank.rank, fontBold(true), rankFontColors[rank]), rankColors[rank], width(30), popup(content));
 }
 
+/**
+ * Creates a Figure representing the ranking icon for the specified ComplexityAnalysisResult.
+ */
 private Figure icon(ComplexityAnalysisResult result) {
 	Rank rank = result.ranking;	
 	
@@ -127,6 +131,9 @@ private Figure icon(ComplexityAnalysisResult result) {
 	return box(text(rank.rank, fontBold(true), rankFontColors[rank]), rankColors[rank], width(30), popup(content));
 }
 
+/**
+ * Creates a Figure representing the ranking icon for the specified DuplicationAnalysisResult.
+ */
 private Figure icon(DuplicationAnalysisResult result) {
 	Rank rank = result.ranking;
 	
@@ -143,6 +150,9 @@ private Figure icon(DuplicationAnalysisResult result) {
 
 public Results CurrentResults = EmptyResults;
 
+/**
+ * Creates a Figure representing the overall maintainability ranking table.
+ */
 public Figure createTable(Results results) {
 	return panel(grid([
 		[ label("Metrics:", [fontBold(true)]) ],
