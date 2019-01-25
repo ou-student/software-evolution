@@ -27,7 +27,7 @@ public void run(loc project) {
 	
 	// Instantiate required objects
 	Duplications duplicates = ();
-	UnitInfos unitInfos = {};
+	UnitInfos unitInfos = ();
 	set[LineCounts] lineCounts = {};
 
 	// run metrics on compilation units and methods.
@@ -52,17 +52,18 @@ public void run(loc project) {
 			complexity = extractComplexity(x.src);
 			unitSize   = extractUnitSize(x.src);
 			
-			unitInfos += <x.src, unitSize, complexity>;
+			unitInfos[x.src] = <x.src, unitSize, complexity>;
 		}
 	}
 	
 	VolumeAnalysisResult volumeAnalysisResult     	    = analyzeVolume(lineCounts);
-	UnitSizeAnalysisResult unitSizeAnalysisResult 	    = analyzeUnitSize(unitInfos); 
-	ComplexityAnalysisResult complexityAnalysisResult   = analyzeComplexity(unitInfos); 
+	UnitSizeAnalysisResult unitSizeAnalysisResult 	    = analyzeUnitSize(unitInfos.info); 
+	ComplexityAnalysisResult complexityAnalysisResult   = analyzeComplexity(unitInfos.info); 
 	DuplicationAnalysisResult duplicationAnalysisResult = analyzeDuplications(duplicates, volumeAnalysisResult.totalLinesOfCode);
 	MaintainabilityScore maintainabilityScore 			= analyzeMaintainability(<volumeAnalysisResult.ranking, complexityAnalysisResult.ranking, duplicationAnalysisResult.ranking, unitSizeAnalysisResult.ranking, RankingUnknown>); 
 	
 	Results results = <volumeAnalysisResult,unitSizeAnalysisResult,complexityAnalysisResult,duplicationAnalysisResult,maintainabilityScore>;
+	
 	
 	//printResults(results, project.uri);	
 }
