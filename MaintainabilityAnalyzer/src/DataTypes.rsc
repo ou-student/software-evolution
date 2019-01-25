@@ -55,6 +55,8 @@ alias UnitSizeAnalysisResult = tuple[Rank ranking, RiskEvaluation risk, int unit
 
 alias ComplexityAnalysisResult = tuple[Rank ranking, RiskEvaluation risk, int unitsCount];
 
+alias UnitAnalysisResult = tuple[Rank ranking, RiskEvaluation risk, int unitsCount];
+
 alias DuplicationAnalysisResult = tuple[Rank ranking, int totalLinesOfCode, int duplicateLines, num percentage];
 
 alias Results = tuple[VolumeAnalysisResult 		volume, 

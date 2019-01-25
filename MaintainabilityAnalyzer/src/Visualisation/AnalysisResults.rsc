@@ -41,14 +41,13 @@ private int labelWidth = 350;
  */
 private list[FProperty] fontStyle = [ fontSize(11), left(), vresizable(false), height(22) ];
 
+/**
+ * Label, icon, rank Figure helpers.
+ */
 private Figure label(Rank rank) = box(text(rank.label), left(), width(labelWidth));
-
 private Figure label(str label) = box(text(label, fontStyle), left(), width(labelWidth));
-
 private Figure label(str label, list[FProperty] styles) = box(text(label, fontStyle + styles), left(), width(labelWidth));
-
 private Figure rank(Rank rank) = box(text(rank.rank), left(), width(labelWidth));
-
 private Figure icon(Rank rank) = box(text(rank.rank, fontBold(true), rankFontColors[rank]), rankColors[rank], width(30));
 
 /**
@@ -90,34 +89,13 @@ private Figure icon(VolumeAnalysisResult result) {
 }
 
 /**
- * Creates a Figure representing the ranking icon for the specified UnitSizeAnalysisResult.
+ * Creates a Figure representing the ranking icon for the specified UnitAnalysisResult.
  */
-private Figure icon(UnitSizeAnalysisResult result) {
-	Rank rank = result.ranking;
-	
-	Figure content = vcat([
-		label("UNIT SIZE", [fontBold(true), height(20), resizable(false)]),
-		label(""),
-		label("Total <result.unitsCount> units of which:"),		
-		riskCategory(RiskCategories.veryHigh,  result.risk),
-		riskCategory(RiskCategories.high,  result.risk),
-		riskCategory(RiskCategories.moderate,  result.risk),
-		riskCategory(RiskCategories.low,  result.risk),
-		label(""),
-		label("Calculated unit size ranking: <rank.rank> (<rank.label>)")
-	], [std(fillColor(ColorPopupBackground))]);
-	
-	return box(text(rank.rank, fontBold(true), rankFontColors[rank]), rankColors[rank], width(30), popup(content));
-}
-
-/**
- * Creates a Figure representing the ranking icon for the specified ComplexityAnalysisResult.
- */
-private Figure icon(ComplexityAnalysisResult result) {
+private Figure icon(str name, UnitAnalysisResult result) {
 	Rank rank = result.ranking;	
 	
 	Figure content = vcat([
-		label("COMPLEXITY", [fontBold(true), height(20), resizable(false)]),
+		label(toUpperCase(name), [fontBold(true), height(20), resizable(false)]),
 		label(""),
 		label("Total <result.unitsCount> units of which:"),		
 		riskCategory(RiskCategories.veryHigh,  result.risk),
@@ -125,7 +103,7 @@ private Figure icon(ComplexityAnalysisResult result) {
 		riskCategory(RiskCategories.moderate,  result.risk),
 		riskCategory(RiskCategories.low,  result.risk),
 		label(""),
-		label("Calculated complexity ranking: <rank.rank> (<rank.label>)")
+		label("Calculated <name> ranking: <rank.rank> (<rank.label>)")
 	], [std(fillColor(ColorPopupBackground))]);
 	
 	return box(text(rank.rank, fontBold(true), rankFontColors[rank]), rankColors[rank], width(30), popup(content));
@@ -157,8 +135,8 @@ public Figure createTable(Results results) {
 	return panel(grid([
 		[ label("Metrics:", [fontBold(true)]) ],
 		[ label("Volume"), icon(results.volume)],
-		[ label("Unit Size"), icon(results.unitSize)],
-		[ label("Complexity"), icon(results.complexity)],
+		[ label("Unit Size"), icon("unit size", results.unitSize)],
+		[ label("Complexity"), icon("complexity", results.complexity)],
 		[ label("Duplication"), icon(results.duplicates)],
 		[ box() ],		
 		[ label("Quality Aspects:", [fontBold(true)]) ],
