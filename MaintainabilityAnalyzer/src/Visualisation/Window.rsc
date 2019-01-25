@@ -46,9 +46,7 @@ void begin() {
 	pb_addNewLocationSelectedEventListener(onPBNewLocationSelected);
 	mip_addNewMethodSelectedEventListener(onMIPNewMethodSelected);
 	
-	menu = menuBar([myButton("Load", loadProject),myButton("Clear", clear)]);
-	
-	//browseTree = createBrowseTree({createM3FromEclipseProject(|project://smallsql/|)});
+	menu = menuBar([]);
 	
 	render(
 		page("Maintainance Analyzer",
@@ -56,7 +54,7 @@ void begin() {
 			 createMain(
 			 	panel(projectBrowser(), "", 0),
 				 	fswitch(int(){return currentIndex;},[
-				 		panel(text("Select a project in the browser on the left to start", center()), "Welcome to the Maintainability Analyzer"),
+				 		welcomePanel(),
 				 		methodInformationPanel(),
 				 		complexityTreemapPanel()
 				 	])
@@ -66,27 +64,6 @@ void begin() {
 	);
 }
 
-//private Figure getTreemapPanel() {
-//	return computeFigure(bool() { bool temp = complexityData.changed; complexityData.changed = false; return temp; }, Figure() {
-//		Figures boxes = [];
-//		if(size(complexityData.ui) > 0) {
-//			cscale = colorScale([s.complexity | s <- complexityData.ui], color("green"),color("red"));
-//			boxes = [createTreemapBox(s, cscale(s.complexity)) | s <- complexityData.ui ];
-//		}
-//		
-//		return panel(treemap(boxes, lineWidth(0)), complexityData.label, 0);
-//	});
-//}
-
-private void clear() {
-	complexityData = complexitySet(true, {}, "");
-}
-
-private void loadProject() {
-	proj = getCurrentProject();
-	r = run(proj.location);
-	complexityData = complexitySet(true, r, proj.label);
-}
 
 public Figure createMain(Figure left, Figure right) {
 	return box(
@@ -100,29 +77,14 @@ public Figure createMain(Figure left, Figure right) {
 	);
 }
 
-
-public FProperty popup(UnitInfo s) {
-	return mouseOver(box(vcat([text(s.unit.path), text(toString(s.complexity))]),
-					 fillColor("lightYellow"),
-					 grow(1.2),
-					 resizable(false)));
+private Figure welcomePanel() {
+	return panel(
+				text(
+					"Select a project in the browser on the left to start", 
+					center()
+				), 
+				"Welcome to the Maintainability Analyzer"
+			);
 }
-
-public Figure createTreemapBox(UnitInfo s, Color c) {
-	return box(area(s.size),
-			   fillColor(c),
-			   popup(s),
-			   onMouseDown(treemapBoxClickHandler(s.unit))
-			   );
-}
-
-private bool(int, map[KeyModifier, bool]) treemapBoxClickHandler(loc location) = bool(int btn, map[KeyModifier, bool] mdf) {
-	if(btn == 1 && mdf[\modCtrl()] == true){
-		edit(location);
-		return true;
-	}
-	return false;
-};
-
 
 
