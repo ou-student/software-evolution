@@ -30,6 +30,15 @@ private map[Rank, FProperty] rankColors = (
 	RankingUnknown:fillColor("White")
 );
 
+private map[Rank, FProperty] rankFontColors = (
+	Rankings.veryLow:fontColor("White"),
+	Rankings.low:fontColor("Black"),
+	Rankings.moderate:fontColor("Black"),
+	Rankings.high:fontColor("White"),
+	Rankings.veryHigh:fontColor("White"),
+	RankingUnknown:fontColor("Black")
+);
+
 private list[FProperty] fontStyle = [ fontSize(11), left(), vresizable(false), height(22) ];
 
 private int labelWidth = 350;
@@ -48,23 +57,6 @@ private Figure icon(Rank rank) {
 	return box(text(rank.rank, fontBold(true), fontColor), rankColors[rank], width(30));
 }
 
-private Figure icon(VolumeAnalysisResult result) {
-	Rank rank = result.ranking;
-	FProperty fontColor = (rank == Rankings.low || rank == Rankings.moderate || rank == RankingUnknown) ? fontColor("Black") : fontColor("White");
-	
-	Figure content = vcat([
-		label("VOLUME RANKING", [fontBold(true)]),
-		label(""),
-		label("Total <result.totalLinesOfCode> lines of which:"),
-		label("<result.codeLines> lines of code"),
-		label("<result.commentLines> comment lines"),
-		label("<result.blankLines> blank lines"),
-		label(""),
-		label("Calculated volume ranking: <result.ranking.rank> (<result.ranking.label>)")
-	], [std(fillColor(ColorPopupBackground))]);
-	
-	return box(text(rank.rank, fontBold(true), fontColor), rankColors[rank], width(30), popup(content));
-}
 
 private Figure riskCategory(RiskCategory riskCategory, RiskEvaluation evaluation) {
 	Figure figure;
@@ -82,19 +74,25 @@ private Figure riskCategory(RiskCategory riskCategory, RiskEvaluation evaluation
 	return figure;	
 }
 
-private Figure riskCategories(RiskEvaluation evaluation) {
-	return grid([
-		riskCategory(RiskCategories.veryHigh,  result.risk),
-		riskCategory(RiskCategories.high,  result.risk),
-		riskCategory(RiskCategories.moderate,  result.risk),
-		riskCategory(RiskCategories.low,  result.risk)	
-	], [width(300), resizable(false), height(100)]);
+private Figure icon(VolumeAnalysisResult result) {
+	Rank rank = result.ranking;	
+	
+	Figure content = vcat([
+		label("VOLUME RANKING", [fontBold(true)]),
+		label(""),
+		label("Total <result.totalLinesOfCode> lines of which:"),
+		label("<result.codeLines> lines of code"),
+		label("<result.commentLines> comment lines"),
+		label("<result.blankLines> blank lines"),
+		label(""),
+		label("Calculated volume ranking: <rank.rank> (<rank.label>)")
+	], [std(fillColor(ColorPopupBackground))]);
+	
+	return box(text(rank.rank, fontBold(true), rankFontColors[rank]), rankColors[rank], width(30), popup(content));
 }
-
 
 private Figure icon(UnitSizeAnalysisResult result) {
 	Rank rank = result.ranking;
-	FProperty fontColor = (rank == Rankings.low || rank == Rankings.moderate || rank == RankingUnknown) ? fontColor("Black") : fontColor("White");
 	
 	Figure content = vcat([
 		label("UNIT SIZE", [fontBold(true), height(20), resizable(false)]),
@@ -105,10 +103,42 @@ private Figure icon(UnitSizeAnalysisResult result) {
 		riskCategory(RiskCategories.moderate,  result.risk),
 		riskCategory(RiskCategories.low,  result.risk),
 		label(""),
-		label("Calculated unit size ranking: <result.ranking.rank> (<result.ranking.label>)")
+		label("Calculated unit size ranking: <rank.rank> (<rank.label>)")
 	], [std(fillColor(ColorPopupBackground))]);
 	
-	return box(text(rank.rank, fontBold(true), fontColor), rankColors[rank], width(30), popup(content));
+	return box(text(rank.rank, fontBold(true), rankFontColors[rank]), rankColors[rank], width(30), popup(content));
+}
+
+private Figure icon(ComplexityAnalysisResult result) {
+	Rank rank = result.ranking;	
+	
+	Figure content = vcat([
+		label("COMPLEXITY", [fontBold(true), height(20), resizable(false)]),
+		label(""),
+		label("Total <result.unitsCount> units of which:"),		
+		riskCategory(RiskCategories.veryHigh,  result.risk),
+		riskCategory(RiskCategories.high,  result.risk),
+		riskCategory(RiskCategories.moderate,  result.risk),
+		riskCategory(RiskCategories.low,  result.risk),
+		label(""),
+		label("Calculated complexity ranking: <rank.rank> (<rank.label>)")
+	], [std(fillColor(ColorPopupBackground))]);
+	
+	return box(text(rank.rank, fontBold(true), rankFontColors[rank]), rankColors[rank], width(30), popup(content));
+}
+
+private Figure icon(DuplicationAnalysisResult result) {
+	Rank rank = result.ranking;
+	
+	Figure content = vcat([
+		label("DUPLICATIONS RANKING", [fontBold(true)]),
+		label(""),
+		label("<result.duplicateLines> of <result.totalLinesOfCode> lines are duplicate: <result.percentage>%"),
+		label(""),
+		label("Calculated duplications ranking: <result.ranking.rank> (<result.ranking.label>)")
+	], [std(fillColor(ColorPopupBackground))]);
+	
+	return box(text(rank.rank, fontBold(true), rankFontColors[rank]), rankColors[rank], width(30), popup(content));
 }
 
 public Results CurrentResults = EmptyResults;
@@ -118,8 +148,8 @@ public Figure createTable(Results results) {
 		[ label("Metrics:", [fontBold(true)]) ],
 		[ label("Volume"), icon(results.volume)],
 		[ label("Unit Size"), icon(results.unitSize)],
-		[ label("Complexity"), icon(results.complexity.ranking)],
-		[ label("Duplication"), icon(results.duplicates.ranking)],
+		[ label("Complexity"), icon(results.complexity)],
+		[ label("Duplication"), icon(results.duplicates)],
 		[ box() ],		
 		[ label("Quality Aspects:", [fontBold(true)]) ],
 		[ label(MaintainabilityAspects.analyzability), icon(results.score.aspects[MaintainabilityAspects.analyzability])],		
