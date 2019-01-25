@@ -38,11 +38,23 @@ private ProjectModels projectModels = (RootLocation:m3(RootLocation));
 alias BrowseTree = map[loc location, loc parent];
 private BrowseTree browseTree = ();
 
+
+
 /*****************************/
 /* Initializer				 */
 /*****************************/
+private bool _isInitialized = false;
+
 public void pb_initialize() {
-	pb_setLocation(RootLocation);
+	if(!_isInitialized) {
+		browseTree = createBrowseTree();
+		pb_addNewLocationSelectedEventListener(onNewLocationSelected);
+		pb_addProjectRefreshRequestEventListener(onProjectRefreshRequest);
+	
+		pb_setLocation(RootLocation);
+		
+		_isInitialized = true;
+	}
 }
 
 /*****************************/
@@ -52,9 +64,9 @@ private bool _redraw = false;
 private void redraw() { _redraw = true; }
 private bool shouldRedraw() { bool temp = _redraw; _redraw = false; return temp; }
 
-/*****************************/
+/*******************************/
 /* New Location Selected event */
-/*****************************/
+/*******************************/
 private list[void(M3, loc)] newLocationSelectedEventListeners = [];
 
 /**
@@ -80,19 +92,35 @@ private void onNewLocationSelected(M3 model, loc location) {
 	pb_setLocation(location);
 }
 
-//private void projectBrowserUpdate() {
-//	redraw();
-//	for(l <- actionListeners) l();
-//}
+/*********************************/
+/* Project Refresh request event */
+/*********************************/
+private list[void(loc)] projectRefreshRequestEventListeners = [];
 
-public M3 getCurrentModel() {
-	return _currentModel;
+/**
+ * Adds an event listener for the project refresh request event.
+ */
+public void pb_addProjectRefreshRequestEventListener(void(loc) listener) {	
+	if(indexOf(projectRefreshRequestEventListeners, listener) == -1) {
+		projectRefreshRequestEventListeners += [listener];
+	}
 }
 
-public loc getSelectedLocation() {
-	return SelectedLocation;
+/**
+ * Trigger the project refresh request event listener.
+ */
+private void projectRefreshRequest(loc project) {
+	for(l <- projectRefreshRequestEventListeners) l(project);
 }
 
+private void onProjectRefreshRequest(loc project) {
+	println("Refreshing <project>");
+}
+
+
+/*********************************/
+/* Module interface methods      */
+/*********************************/
 public void pb_setLocation(loc location) {
 	if(location != SelectedLocation){
 		if(location in browseTree){
@@ -115,38 +143,12 @@ public void pb_navigateTo(loc location) {
 	}
 }
 
-public BrowseTree createBrowseTree() {
-	BrowseTree tree = ();
-	
-	set[loc] projects = projects();  // { |project://JabberPoint/|, |project://smallsql| };
-	
-	for (p <- sort(projects)) {
-		print("Creating M3 for <p>...");
-		
-		try {
-			if(p == |project://MaintainabilityAnalyzer|) throw "This project"; 
-			M3 model = createM3FromEclipseProject(p);
-			projectModels[p] = model;
-		}
-		catch: {
-			println(" Skipped");
-			continue;
-		}
-		println(" Done");
-		
-		print("Creating tree for <p>...");
-		tree += createBrowseTree(projectModels[p]);	
-		println(" Done");
-	}	
-	
-	return tree;
-}
 
+/**
+ * Constructs a projectBrowser panel
+ */
 public Figure projectBrowser() {
-
-	// Initialize project browser
-	browseTree = createBrowseTree();
-	pb_addNewLocationSelectedEventListener(onNewLocationSelected);
+	pb_initialize();
 
 	return computeFigure(shouldRedraw, Figure() {
 		return grid([
@@ -163,6 +165,10 @@ public Figure projectBrowser() {
 	});	
 }
 
+
+/*********************************/
+/* Private methods               */
+/*********************************/
 private Figure createHeader() {
 	if (CurrentLocation == RootLocation) {
 		int projectCount = size({ p | p <- invert(browseTree)[RootLocation], p != RootLocation });
@@ -269,7 +275,8 @@ private list[Figure] createItem(loc location) {
 			fillColor,
 	 		lineWidth(0),
 	 		resizable(false),
-	 		width(48)	 		
+	 		width(48),
+	 		onMouseDown(itemRefreshClickHandler(location))		
 		)	
 	];
 }
@@ -290,6 +297,15 @@ private bool(int, map[KeyModifier,bool]) itemNavigateHandler(loc location) = boo
 	return true;
 }; 
 
+private bool(int, map[KeyModifier,bool]) itemRefreshClickHandler(loc location) = bool(int btn, map[KeyModifier,bool] mdf) {
+	if(btn == 1) {
+		if(isProject(location)) {
+			projectRefreshRequest(location);
+		}
+	}
+	return true;
+};
+
 
 private Figure backbutton() {
 	return box(
@@ -309,6 +325,33 @@ private bool(int, map[KeyModifier,bool]) backButtonClickHandler() = bool(int btn
 
 	return true;
 }; 
+
+private BrowseTree createBrowseTree() {
+	BrowseTree tree = ();
+	
+	set[loc] projects = projects();  // { |project://JabberPoint/|, |project://smallsql| };
+	
+	for (p <- sort(projects)) {
+		print("Creating M3 for <p>...");
+		
+		try {
+			if(p == |project://MaintainabilityAnalyzer|) throw "This project"; 
+			M3 model = createM3FromEclipseProject(p);
+			projectModels[p] = model;
+		}
+		catch: {
+			println(" Skipped");
+			continue;
+		}
+		println(" Done");
+		
+		print("Creating tree for <p>...");
+		tree += createBrowseTree(projectModels[p]);	
+		println(" Done");
+	}	
+	
+	return tree;
+}
 
 private map[loc location, loc parent] createBrowseTree(M3 model) {
 	map[loc, loc] locationMap = (RootLocation:RootLocation);	
