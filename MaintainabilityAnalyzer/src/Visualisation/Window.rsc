@@ -41,8 +41,6 @@ void onMIPNewMethodSelected(loc method) {
 
 void begin() {
 
-	pb_initialize();
-
 	pb_addNewLocationSelectedEventListener(onPBNewLocationSelected);
 	mip_addNewMethodSelectedEventListener(onMIPNewMethodSelected);
 	
