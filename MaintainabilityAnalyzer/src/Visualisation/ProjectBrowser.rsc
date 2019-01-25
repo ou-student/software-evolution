@@ -24,6 +24,7 @@ import DateTime;
 import Set;
 import String;
 import Utils::CoreExtension;
+import Utils::MetricsInformation;
 
 private loc RootLocation = |browse://root|;
 private loc CurrentProject = RootLocation;
@@ -31,9 +32,6 @@ private loc CurrentLocation = RootLocation;
 private loc SelectedLocation = RootLocation;
 
 public str PathNormlizationPrefix = "/src";
-
-alias ProjectModels = map[loc project, M3 model];
-private ProjectModels projectModels = (RootLocation:m3(RootLocation));
 
 alias BrowseTree = map[loc location, loc parent];
 private BrowseTree browseTree = ();
@@ -45,8 +43,8 @@ private BrowseTree browseTree = ();
 /*****************************/
 private bool _isInitialized = false;
 
-public void pb_initialize() {
-	if(!_isInitialized) {
+public bool pb_initialize(bool force) {
+	if(!_isInitialized || force) {
 		browseTree = createBrowseTree();
 		pb_addNewLocationSelectedEventListener(onNewLocationSelected);
 		pb_addProjectRefreshRequestEventListener(onProjectRefreshRequest);
@@ -54,7 +52,9 @@ public void pb_initialize() {
 		pb_setLocation(RootLocation);
 		
 		_isInitialized = true;
+		return true;
 	}
+	return false;
 }
 
 /*****************************/
@@ -67,12 +67,12 @@ private bool shouldRedraw() { bool temp = _redraw; _redraw = false; return temp;
 /*******************************/
 /* New Location Selected event */
 /*******************************/
-private list[void(M3, loc)] newLocationSelectedEventListeners = [];
+private list[void(loc)] newLocationSelectedEventListeners = [];
 
 /**
  * Adds an event listener for the new location selected event.
  */
-public void pb_addNewLocationSelectedEventListener(void(M3, loc) listener) {
+public void pb_addNewLocationSelectedEventListener(void(loc) listener) {
 	if(indexOf(newLocationSelectedEventListeners, listener) == -1) {
 		newLocationSelectedEventListeners += [listener];
 	}
@@ -82,13 +82,13 @@ public void pb_addNewLocationSelectedEventListener(void(M3, loc) listener) {
  * Trigger the new method selected event listener.
  */
 private void newLocationSelected(loc location) {
-	for(l <- newLocationSelectedEventListeners) l(projectModels[CurrentProject], location);
+	for(l <- newLocationSelectedEventListeners) l(location);
 }
 
 /**
  * Local event handler for selecting new location.
  */
-private void onNewLocationSelected(M3 model, loc location) {
+private void onNewLocationSelected(loc location) {
 	pb_setLocation(location);
 }
 
@@ -148,7 +148,7 @@ public void pb_navigateTo(loc location) {
  * Constructs a projectBrowser panel
  */
 public Figure projectBrowser() {
-	pb_initialize();
+	pb_initialize(false);
 
 	return computeFigure(shouldRedraw, Figure() {
 		return grid([
@@ -329,25 +329,8 @@ private bool(int, map[KeyModifier,bool]) backButtonClickHandler() = bool(int btn
 private BrowseTree createBrowseTree() {
 	BrowseTree tree = ();
 	
-	set[loc] projects = projects();  // { |project://JabberPoint/|, |project://smallsql| };
-	
-	for (p <- sort(projects)) {
-		print("Creating M3 for <p>...");
-		
-		try {
-			if(p == |project://MaintainabilityAnalyzer|) throw "This project"; 
-			M3 model = createM3FromEclipseProject(p);
-			projectModels[p] = model;
-		}
-		catch: {
-			println(" Skipped");
-			continue;
-		}
-		println(" Done");
-		
-		print("Creating tree for <p>...");
-		tree += createBrowseTree(projectModels[p]);	
-		println(" Done");
+	for (m <- mi_getModels()) {
+		tree += createBrowseTree(m);	
 	}	
 	
 	return tree;
@@ -356,6 +339,9 @@ private BrowseTree createBrowseTree() {
 private map[loc location, loc parent] createBrowseTree(M3 model) {
 	map[loc, loc] locationMap = (RootLocation:RootLocation);	
 	loc project = cast(#loc, model[0]);
+	
+	print("Creating tree for <project>... ");
+	
 	set[loc] packages = packages(model);
 	set[loc] units = files(model);
 	set[loc] methods = methods(model);
@@ -372,6 +358,8 @@ private map[loc location, loc parent] createBrowseTree(M3 model) {
 	locationMap += (package:project | package <- packages);
 	locationMap += (unit:package | package <- packages, unit <- units, useDefaultPackage ? true : unit.path == PathNormlizationPrefix + package.path + "/" + unit.file);	
 	locationMap += (m:unit | unit <- units, m <- methods, normalizeUnitPath(unit) == normalizeMethodPath(m)); 
+	
+	println("Done");
 	
 	return locationMap;
 }
