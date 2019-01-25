@@ -17,7 +17,7 @@ public Ranking Rankings = <
 >;
 
 // Defined seperately as this is an exceptional case that should be outside of the common Rankings.  
-public Rank RankingUnknown = <"?", "Not assessed", 1>;
+public Rank RankingUnknown = <"?", "Not assessed", 0>;
 
 alias RiskValues = tuple[UnitInfos units, int linesOfCode, num percentage];
 

@@ -10,3 +10,5 @@ import lang::java::m3::Core;
  */
 public bool isAnonymous(loc entity) = isMethod(entity) && contains(entity.path, "$anonymous");
 
+public bool isProject(loc entity) = entity.scheme == "project";
+
