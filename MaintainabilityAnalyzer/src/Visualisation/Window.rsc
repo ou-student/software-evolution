@@ -10,6 +10,8 @@ import util::Editors;
 import DataTypes;
 import Main;
 
+import Utils::MetricsInformation;
+
 import Visualisation::ProjectBrowser;
 import Visualisation::MethodInformationPanel;
 import Visualisation::ComplexityTreemapPanel;
@@ -21,9 +23,9 @@ import analysis::graphs::Graph;
 private loc currentSelectedMethod;
 private int currentIndex = 0;
 
-void onPBNewLocationSelected(M3 model, loc location) {
+void onPBNewLocationSelected(loc location) {
 	if(isMethod(location)){
-		mip_setCurrentMethod(model, location);
+		mip_setCurrentMethod(location);
 		currentIndex = 1;
 	} else {
 		currentIndex = 2;
@@ -40,8 +42,11 @@ void onMIPNewMethodSelected(loc method) {
 
 
 void begin() {
+	bool miReInit = mi_initialize(false);
+	pb_initialize(miReInit);
 
 	pb_addNewLocationSelectedEventListener(onPBNewLocationSelected);
+	pb_addProjectRefreshRequestEventListener(mi_refreshProjectMetrics);
 	mip_addNewMethodSelectedEventListener(onMIPNewMethodSelected);
 	
 	menu = menuBar([]);
