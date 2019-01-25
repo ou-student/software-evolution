@@ -26,15 +26,14 @@ import String;
 import Utils::CoreExtension;
 
 private loc RootLocation = |browse://root|;
+private loc CurrentProject = RootLocation;
 private loc CurrentLocation = RootLocation;
 private loc SelectedLocation = RootLocation;
 
 public str PathNormlizationPrefix = "/src";
 
-private M3 _currentModel = createM3FromEclipseProject(|project://smallsql|);
-
 alias ProjectModels = map[loc project, M3 model];
-private ProjectModels projectModels = ();
+private ProjectModels projectModels = (RootLocation:m3(RootLocation));
 
 alias BrowseTree = map[loc location, loc parent];
 private BrowseTree browseTree = ();
@@ -70,8 +69,8 @@ public void pb_addNewLocationSelectedEventListener(void(M3, loc) listener) {
 /**
  * Trigger the new method selected event listener.
  */
-private void newLocationSelected(M3 model, loc location) {
-	for(l <- newLocationSelectedEventListeners) l(model, location);
+private void newLocationSelected(loc location) {
+	for(l <- newLocationSelectedEventListeners) l(projectModels[CurrentProject], location);
 }
 
 /**
@@ -98,11 +97,19 @@ public void pb_setLocation(loc location) {
 	if(location != SelectedLocation){
 		if(location in browseTree){
 			SelectedLocation = location;
-			CurrentLocation = browseTree[location];
-			
-			println("SelectedLocation: <SelectedLocation>");
-			println("CurrentLocation: <CurrentLocation>");
+			pb_navigateTo(browseTree[location]);
 
+			redraw();
+		}
+	}
+}
+
+public void pb_navigateTo(loc location) {
+	if(location != CurrentLocation){
+		if(location in browseTree){
+			CurrentLocation = location;
+			CurrentProject = getProjectOfLocation(location);
+			
 			redraw();
 		}
 	}
@@ -111,15 +118,25 @@ public void pb_setLocation(loc location) {
 public BrowseTree createBrowseTree() {
 	BrowseTree tree = ();
 	
-	set[loc] projects = { |project://JabberPoint/|, |project://smallsql| };
+	set[loc] projects = projects();  // { |project://JabberPoint/|, |project://smallsql| };
 	
 	for (p <- sort(projects)) {
-		println("Creating M3 for <p>");
-		projectModels[p] = createM3FromEclipseProject(p);
-		println("Creating tree for <p>");
+		print("Creating M3 for <p>...");
+		
+		try {
+			if(p == |project://MaintainabilityAnalyzer|) throw "This project"; 
+			M3 model = createM3FromEclipseProject(p);
+			projectModels[p] = model;
+		}
+		catch: {
+			println(" Skipped");
+			continue;
+		}
+		println(" Done");
+		
+		print("Creating tree for <p>...");
 		tree += createBrowseTree(projectModels[p]);	
-		println("Done.");
-		println();
+		println(" Done");
 	}	
 	
 	return tree;
@@ -259,7 +276,7 @@ private list[Figure] createItem(loc location) {
 
 private bool(int, map[KeyModifier,bool]) itemSelectHandler(loc location) = bool(int btn, map[KeyModifier,bool] mdf) {
 	if(btn == 1) {
-		newLocationSelected(projectModels[getProjectOfLocation(location)], location);
+		newLocationSelected(location);
 	}
 
 	return true;
@@ -267,8 +284,7 @@ private bool(int, map[KeyModifier,bool]) itemSelectHandler(loc location) = bool(
 
 private bool(int, map[KeyModifier,bool]) itemNavigateHandler(loc location) = bool(int btn, map[KeyModifier,bool] mdf) {
 	if(btn == 1) {
-		CurrentLocation = location;
-		redraw();
+		pb_navigateTo(location);
 	}
 
 	return true;
@@ -287,7 +303,7 @@ private Figure backbutton() {
 
 private bool(int, map[KeyModifier,bool]) backButtonClickHandler() = bool(int btn, map[KeyModifier,bool] mdf) {
 	if(btn == 1) {
-		CurrentLocation = browseTree[CurrentLocation];
+		pb_navigateTo(browseTree[CurrentLocation]);
 		redraw();
 	}
 
@@ -301,8 +317,6 @@ private map[loc location, loc parent] createBrowseTree(M3 model) {
 	set[loc] units = files(model);
 	set[loc] methods = methods(model);
 	bool useDefaultPackage = false;
-	
-	println("size packages: <size(packages)>");
 	
 	// Create a default package if there are no packages.
 	if (size(packages) == 0) {
@@ -320,7 +334,7 @@ private map[loc location, loc parent] createBrowseTree(M3 model) {
 }
 
 private loc getProjectOfLocation(loc location){
-	if(isProject(location)) return location;
+	if(isProject(location) || location == RootLocation) return location;
 	
 	return getProjectOfLocation(browseTree[location]);
 }
