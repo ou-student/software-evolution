@@ -8,9 +8,10 @@ import lang::java::jdt::m3::Core;
 import analysis::graphs::Graph;
 import util::Editors;
 
+import Utils::MetricsInformation;
+
 import Visualisation::Controls;
 
-private M3 currentModel = m3(|unknown:///|);
 private loc currentMethod = |unknown:///|;
 
 /*****************************/
@@ -58,22 +59,16 @@ private void newMethodSelected(loc method) {
  * Local event handler for selecting new method.
  */
 private void onNewMethodSelected(loc method) {
-	mip_setCurrentMethod(currentModel, method);
+	mip_setCurrentMethod(method);
 }
 
-public void mip_setCurrentMethod(M3 model, loc method) {
+public void mip_setCurrentMethod(loc method) {
 
-	if(method in methods(model)) {
-		currentModel = model;
-		currentMethod = method;
-		redraw();
-	} else {
-		println("Given method is not in given model!");
-	}
+	currentMethod = method;
+	redraw();
 }
 
 public void mip_clearMethodInformationPanel() {
-	currentModel = m3(|unknown:///|);
 	currentMethod = |unknown:///|;
 	redraw();
 }
@@ -89,10 +84,10 @@ public Figure methodInformationPanel() {
 						label("Unit Maintainability Ranking:"),
 						box(hscrollable(getGraph())),
 						hcat([
-							text("Complexity: ...", left()),
+							text("Complexity: <mi_getUnitComplexity(currentMethod)>", left()),
 							text("LOC: ...", left()),
-							text("Unitsize: ...", left()),
-							myButton("View source", void(){edit(getDeclaration(currentMethod));})
+							text("Unitsize: <mi_getUnitLOC(currentMethod)>", left()),
+							myButton("View source", void(){edit(mi_getDeclaration(currentMethod));})
 						], vsize(60), vresizable(false), justify(true))
 						
 					]),
@@ -110,8 +105,10 @@ private loc getDeclaration(loc location) {
 }
 
 Figure getGraph(){
-	pred = predecessors(currentModel.methodInvocation, currentMethod);
-	succ = successors(currentModel.methodInvocation, currentMethod);
+	//pred = predecessors(currentModel.methodInvocation, currentMethod);
+	//succ = successors(currentModel.methodInvocation, currentMethod);
+	pred = mi_getPredecessors(currentMethod);
+	succ = mi_getSuccessors(currentMethod);
 	
 	nodes = [ graphNode(pr) | pr <- (pred + succ +{currentMethod}) ];
 	
@@ -133,7 +130,7 @@ Figure graphNode(loc l) = box(
 						  
 Color getNodeColor(loc l) {
 	if(l == currentMethod) return color("red");
-	if(l notin methods(currentModel)) return color("grey");
+	//if(l notin methods(currentModel)) return color("grey");
 	return color("blue");
 }
 
@@ -156,8 +153,8 @@ public void testModule() {
 	//for(m <- sort(domain(model.containment))) {
 	//	println(m);
 	//}
-	
-	setCurrentMethod(model, met);
+	//
+	//setCurrentMethod(model, met);
 	
 	
 	//render(methodInformationPanel());
