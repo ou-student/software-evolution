@@ -143,6 +143,27 @@ public void pb_navigateTo(loc location) {
 	}
 }
 
+public set[loc] pb_getMethodsOfSelectedLocation() {
+	return getMethodsOfLocation(SelectedLocation);
+}
+
+private set[loc] getMethodsOfLocation(loc location) {
+	if(isMethod(location)) return {location};
+	
+	set[loc] methods = {};
+	try{
+		for(l <- invert(browseTree)[location]) {
+			if(l != location)
+				methods += getMethodsOfLocation(l);
+		}
+	}
+	catch:{
+		println("<location> has no children...");
+	}
+		
+	return methods;
+}
+
 
 /**
  * Constructs a projectBrowser panel

@@ -100,7 +100,7 @@ public void mi_refreshProjectMetrics(loc project) {
 			complexity = extractComplexity(decl.src);
 			unitSize   = extractUnitSize(decl.src);
 			
-			projectData.unitInfos[decl.name] = <decl.src, unitSize, complexity>;
+			projectData.unitInfos[decl.name] = <decl.name, unitSize, complexity>;
 		}
 	}
 	
@@ -144,7 +144,19 @@ public set[loc] mi_getPredecessors(loc from) {
 }
 
 public loc mi_getDeclaration(loc src) {
-	return toMapUnique(global.declarations)[src];
+	try {
+		return toMapUnique(global.declarations)[src];
+	}
+	catch: {
+		return |unknown:///|;
+	}
+}
+
+public LineCounts mi_getLineCountsForMethod(loc method) {
+	if(isMethod(method)) {
+		return extractLinesOfCode(method);
+	}
+	return <|unknown:///|,0,0,0,0>;
 }
 
 public int mi_getUnitComplexity(loc location) {
@@ -175,6 +187,23 @@ public int mi_getUnitLOC(loc location) {
 	}
 	
 	return LOC;
+}
+
+public UnitInfo mi_getUnitInfo(loc location) {
+	
+	UnitInfo retval = <|unknown:///|, 0, 0>;
+
+	if(isMethod(location)) {		
+		try{
+			retval = globalUnitInfos[location];
+		}
+		catch: {
+			println("Method <location> not found, might not have been initalized..");
+		}	
+	}
+	
+	return retval;
+	
 }
 
 

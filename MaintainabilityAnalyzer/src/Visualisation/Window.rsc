@@ -5,7 +5,7 @@ import vis::Figure;
 import vis::Render;
 import vis::KeySym;
 import util::Math;
-import util::Editors;
+
 
 import DataTypes;
 import Main;
@@ -28,6 +28,7 @@ void onPBNewLocationSelected(loc location) {
 		mip_setCurrentMethod(location);
 		currentIndex = 1;
 	} else {
+		ctp_setMethods(location.path, pb_getMethodsOfSelectedLocation());
 		currentIndex = 2;
 	}
 }
@@ -36,18 +37,25 @@ void onPBNewLocationSelected(loc location) {
  * Event listener for MethodInformationPanel new selected method.
  */
 void onMIPNewMethodSelected(loc method) {
-	println("Selected new method <method>");
 	pb_setLocation(method);
+}
+
+void onCTPMethodSelected(loc method) {
+	pb_setLocation(method);
+	mip_setCurrentMethod(method);
+	currentIndex = 1;
 }
 
 
 void begin() {
 	bool miReInit = mi_initialize(false);
 	pb_initialize(miReInit);
-
+	
 	pb_addNewLocationSelectedEventListener(onPBNewLocationSelected);
 	pb_addProjectRefreshRequestEventListener(mi_refreshProjectMetrics);
 	mip_addNewMethodSelectedEventListener(onMIPNewMethodSelected);
+	
+	ctp_addMethodSelectedEventListener(onCTPMethodSelected);
 	
 	menu = menuBar([]);
 	

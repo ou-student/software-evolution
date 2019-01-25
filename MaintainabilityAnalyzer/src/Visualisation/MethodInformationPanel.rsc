@@ -1,12 +1,15 @@
 module Visualisation::MethodInformationPanel
 
 import Prelude;
+import DataTypes;
 import vis::Figure;
 import vis::Render;
 import vis::KeySym;
 import lang::java::jdt::m3::Core;
 import analysis::graphs::Graph;
 import util::Editors;
+
+import util::Math;
 
 import Utils::MetricsInformation;
 
@@ -85,10 +88,11 @@ public Figure methodInformationPanel() {
 						box(hscrollable(getGraph())),
 						hcat([
 							text("Complexity: <mi_getUnitComplexity(currentMethod)>", left()),
-							text("LOC: ...", left()),
+							text("LineCount:", left()),
+							getLineCountsFigure(currentMethod),
 							text("Unitsize: <mi_getUnitLOC(currentMethod)>", left()),
 							myButton("View source", void(){edit(mi_getDeclaration(currentMethod));})
-						], vsize(60), vresizable(false), justify(true))
+						],hgap(20), vsize(60), vresizable(false), justify(true))
 						
 					]),
 					getName(currentMethod)
@@ -97,11 +101,24 @@ public Figure methodInformationPanel() {
 		);
 }
 
-private loc getDeclaration(loc location) {
-	declarations = currentModel.declarations[location];
-	if(size(declarations) > 0)
-		return getOneFrom(currentModel.declarations[location]);
-	return location;
+Figure getLineCountsFigure(loc location) {
+	LineCounts lc = mi_getLineCountsForMethod(location);
+	
+	comments = (0.00 + lc.comment) / (0.001 + lc.total);
+	blank = (0.00 + lc.blank) / (0.001 + lc.total);
+	code = (0.00 + lc.code) / (0.001 + lc.total);
+	
+	println("Comments <comments>, Blank <blank>, Code <code>");
+	
+	return box(
+		hcat([
+			box(fillColor("black"), lineWidth(0), hshrink(comments)),
+			box(fillColor("green"), lineWidth(0), hshrink(code)),
+			box(fillColor("white"), lineWidth(0), hshrink(blank))
+		],std(vsize(40))), popup("Comments:\t <lc.comment>\nBlank:\t\t <lc.blank>\nCode:\t\t <lc.code>"),
+		std(vresizable(false))
+	);
+	
 }
 
 Figure getGraph(){
@@ -130,8 +147,8 @@ Figure graphNode(loc l) = box(
 						  
 Color getNodeColor(loc l) {
 	if(l == currentMethod) return color("red");
-	//if(l notin methods(currentModel)) return color("grey");
-	return color("blue");
+	if(mi_getDeclaration(l) == |unknown:///|) return color("grey");
+	return color("green");
 }
 
 private bool(int, map[KeyModifier, bool]) graphNodeClickHandler(loc location) = bool(int btn, map[KeyModifier, bool] mdf) {
@@ -144,46 +161,4 @@ private bool(int, map[KeyModifier, bool]) graphNodeClickHandler(loc location) = 
 
 private str getName(loc l) {
 	return /^<n:.*>\(.*$/ := l.file ? n + "()" : l.file;	
-}
-
-public void testModule() {
-	model = createM3FromEclipseProject(|project://smallsql|);
-	met = |java+method:///smallsql/database/Columns/copy()|;
-	
-	//for(m <- sort(domain(model.containment))) {
-	//	println(m);
-	//}
-	//
-	//setCurrentMethod(model, met);
-	
-	
-	//render(methodInformationPanel());
-	
-	//for(meth <- currentModel.methodInvocation) {
-	//	println(meth);
-	//}
-	//
-	//m = predecessors(currentModel.methodInvocation, currentMethod);
-	//s = successors(currentModel.methodInvocation, currentMethod);
-	//
-	//nodes = [ graphNode(pr) | pr <- (m+s+{currentMethod}) ];
-	//println(nodes);
-	//
-	//edges = [ edge(pr.path, currentMethod.path) | pr <- m ];
-	//edges += [ edge(currentMethod.path, pr.path) | pr <- s ];
-	//println(edges);
-	
-		
-	//println("Is used in: ");
-	//for(pr <- m) {
-	//	println(pr);
-	//}
-	//
-	//println();
-	//println("Uses: ");
-	//for(suc <- s) {
-	//	println(suc);
-	//}
-	
-	//println(currentMethod);
 }
