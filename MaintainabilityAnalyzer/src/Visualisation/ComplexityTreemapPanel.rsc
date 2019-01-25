@@ -11,6 +11,18 @@ import Visualisation::Controls;
 private map[loc, UnitInfos] complexityData = ();
 
 /*****************************/
+/* Initializer				 */
+/*****************************/
+private bool _isInitialized = false;
+
+public void ctp_initialize() {
+	if(!_isInitialized) {		
+		
+		_isInitialized = true;
+	}
+}
+
+/*****************************/
 /* Redraw panel				 */
 /*****************************/
 private bool _redraw = false;
