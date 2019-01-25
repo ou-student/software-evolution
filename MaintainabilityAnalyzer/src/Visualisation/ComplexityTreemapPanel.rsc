@@ -39,6 +39,18 @@ public Figure complexityTreemapPanel() {
 	);
 }
 
+//private Figure getTreemapPanel() {
+//	return computeFigure(bool() { bool temp = complexityData.changed; complexityData.changed = false; return temp; }, Figure() {
+//		Figures boxes = [];
+//		if(size(complexityData.ui) > 0) {
+//			cscale = colorScale([s.complexity | s <- complexityData.ui], color("green"),color("red"));
+//			boxes = [createTreemapBox(s, cscale(s.complexity)) | s <- complexityData.ui ];
+//		}
+//		
+//		return panel(treemap(boxes, lineWidth(0)), complexityData.label, 0);
+//	});
+//}
+
 public FProperty popup(UnitInfo s) {
 	return mouseOver(box(vcat([text(s.unit.path), text(toString(s.complexity))]),
 					 fillColor("lightYellow"),
