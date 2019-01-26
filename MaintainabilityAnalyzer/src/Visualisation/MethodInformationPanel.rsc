@@ -28,6 +28,8 @@ public void mip_initialize() {
 		
 		_isInitialized = true;
 	}
+	
+	currentMethod = |unknown:///|;
 }
 
 /*****************************/
@@ -86,13 +88,14 @@ public Figure methodInformationPanel() {
 					vcat([
 						label("Unit Maintainability Ranking:"),
 						box(hscrollable(getGraph())),
-						hcat([
-							text("Complexity: <mi_getUnitComplexity(currentMethod)>", left()),
-							text("LineCount:", left()),
-							getLineCountsFigure(currentMethod),
-							text("Unitsize: <mi_getUnitLOC(currentMethod)>", left()),
-							myButton("View source", void(){edit(mi_getDeclaration(currentMethod));})
-						],hgap(20), vsize(60), vresizable(false), justify(true))
+						box(
+							hcat([
+								text("Complexity: <mi_getUnitComplexity(currentMethod)>", left()),
+								getLineCountsFigure(currentMethod),
+								text("Unitsize: <mi_getUnitLOC(currentMethod)>", left()),
+								myButton("View source", void(){edit(mi_getDeclaration(currentMethod));}, hresizable(false), width(60))
+							],hgap(40), vsize(40), vresizable(false), startGap(true), endGap(true)),
+						vsize(60), vresizable(false))
 						
 					]),
 					getName(currentMethod)
@@ -104,26 +107,26 @@ public Figure methodInformationPanel() {
 Figure getLineCountsFigure(loc location) {
 	LineCounts lc = mi_getLineCountsForMethod(location);
 	
-	comments = (0.00 + lc.comment) / (0.001 + lc.total);
-	blank = (0.00 + lc.blank) / (0.001 + lc.total);
-	code = (0.00 + lc.code) / (0.001 + lc.total);
+	comments = (0.00 + lc.comment) / (0.000001 + lc.total);
+	blank = (0.00 + lc.blank) / (0.000001 + lc.total);
+	code = 1.0 - comments - blank;
 	
-	println("Comments <comments>, Blank <blank>, Code <code>");
-	
-	return box(
+	return 
 		hcat([
-			box(fillColor("black"), lineWidth(0), hshrink(comments)),
-			box(fillColor("green"), lineWidth(0), hshrink(code)),
-			box(fillColor("white"), lineWidth(0), hshrink(blank))
-		],std(vsize(40))), popup("Comments:\t <lc.comment>\nBlank:\t\t <lc.blank>\nCode:\t\t <lc.code>"),
-		std(vresizable(false))
-	);
+			text("Line Counts:"),
+			box(
+				hcat([
+					box(/*text("<lc.comment>", fontColor("white")),*/fillColor("black"), lineWidth(0), hshrink(comments)),
+					box(/*text("<lc.code>",    fontColor("white")),*/fillColor("green"), lineWidth(0), hshrink(code)),
+					box(/*text("<lc.blank>",   fontColor("white")),*/fillColor("white"), lineWidth(0), hshrink(blank))
+				],std(vsize(40))), popup("Comments:\t <lc.comment>\nCode:\t\t <lc.code>\nBlank:\t\t <lc.blank>"),
+				std(vresizable(false))
+			)
+		], hgap(5));
 	
 }
 
 Figure getGraph(){
-	//pred = predecessors(currentModel.methodInvocation, currentMethod);
-	//succ = successors(currentModel.methodInvocation, currentMethod);
 	pred = mi_getPredecessors(currentMethod);
 	succ = mi_getSuccessors(currentMethod);
 	
@@ -132,7 +135,7 @@ Figure getGraph(){
 	edges = [ edge(method.path, currentMethod.path) | method <- pred ];
 	edges += [ edge(currentMethod.path, method.path) | method <- succ ];
 	
-	return graph(nodes, edges, hint("layered"),gap(50));
+	return graph(nodes, edges, hint("layered"), hgap(10), vgap(50));
 }
 
 Figure graphNode(loc l) = box(

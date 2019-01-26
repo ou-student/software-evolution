@@ -68,41 +68,33 @@ public Figure complexityTreemapPanel() {
 		Figure() {
 			nodes = [];
 			if(size(unitinfos) >0) {
-				cscale = colorScale([0..15], color("green"),color("red"));
-				nodes = [createTreemapBox(s, cscale(min(s.complexity, 15))) | s <- unitinfos ];
+				cscale = colorScale([0..50], color("green"),color("red"));
+				nodes = [createTreemapBox(s, cscale(min(s.complexity, 50))) | s <- unitinfos ];
 			}
 			
-			return panel(treemap(nodes), title);
+			return panel(treemap(nodes), title, 0);
 		}
 	);
 }
 
-//private Figure getTreemapPanel() {
-//	return computeFigure(bool() { bool temp = complexityData.changed; complexityData.changed = false; return temp; }, Figure() {
-//		Figures boxes = [];
-//		if(size(complexityData.ui) > 0) {
-//			cscale = colorScale([s.complexity | s <- complexityData.ui], color("green"),color("red"));
-//			boxes = [createTreemapBox(s, cscale(s.complexity)) | s <- complexityData.ui ];
-//		}
-//		
-//		return panel(treemap(boxes, lineWidth(0)), complexityData.label, 0);
-//	});
-//}
-
 public FProperty popup(UnitInfo s) {
 	return mouseOver(box(vcat([text(s.unit.file, fontBold(true), left()), text("Complexity:\t<s.complexity>", fontItalic(true), left()), text("Lines of code:\t<s.size>", fontItalic(true), left())], vgap(5)),
-					 fillColor("lightYellow"),
-					 grow(1.2),
+					 fillColor(ColorPopupBackground),
+					 gap(5), startGap(true), endGap(true),
 					 resizable(false)));
 }
 
 private Figure createTreemapBox(UnitInfo s, Color c) {
-	return box(area(s.size),
+	return box(
+			   area(s.size),
 			   fillColor(c),
+			   shrink(1.0,1.0),
 			   popup(s),
 			   onMouseDown(treemapBoxClickHandler(s.unit))
-			   );
+			);
 }
+
+private str getLabel(loc method) = ((/^<n:.*>\(.*$/ := method.file) ? n : method.file) + "()";
 
 private bool(int, map[KeyModifier, bool]) treemapBoxClickHandler(loc location) = bool(int btn, map[KeyModifier, bool] mdf) {
 	if(btn == 1 && mdf[\modCtrl()] == true){

@@ -54,6 +54,11 @@ public bool pb_initialize(bool force) {
 		_isInitialized = true;
 		return true;
 	}
+	
+	CurrentProject = RootLocation;
+	CurrentLocation = RootLocation;
+	SelectedLocation = RootLocation;
+	
 	return false;
 }
 
@@ -174,12 +179,12 @@ public Figure projectBrowser() {
 	return computeFigure(shouldRedraw, Figure() {
 		return grid([
 			[createHeader()],
-			[vscrollable(box(
-				grid(createItems(), [top()]),
+			[scrollable(box(
+				grid(createItems(), top()),
 				std(fontColor(rgb(55,71,79))),
 				top(),
 				left(),
-				resizable(false),
+				vresizable(false),
 				lineWidth(0)			
 			))]
 		]);
@@ -278,7 +283,7 @@ private list[Figure] createItem(loc location) {
 	 		resizable(false),	 		
 	 		width(24),
 	 		fillColor,
-	 		onMouseDown(itemNavigateHandler(location))
+	 		onMouseDown(isMethod(location) ? itemSelectHandler(location) : itemNavigateHandler(location))
 	 	),
 		box(
 			text(label, left(), fontSize(12), fontColor),		
@@ -286,8 +291,7 @@ private list[Figure] createItem(loc location) {
 			hresizable(true), 
 			height(24), 
 			onMouseDown(itemSelectHandler(location)), 
-			lineWidth(0),	
-			width(450),		
+			lineWidth(0),		
 			top(),			
 			fillColor
 		),
@@ -296,7 +300,7 @@ private list[Figure] createItem(loc location) {
 			fillColor,
 	 		lineWidth(0),
 	 		resizable(false),
-	 		width(48),
+	 		width(isProject(location) ? 48 : 0),
 	 		onMouseDown(itemRefreshClickHandler(location))		
 		)	
 	];

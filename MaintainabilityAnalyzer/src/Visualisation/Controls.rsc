@@ -13,7 +13,7 @@ public Color ColorPopupBackground = ColorBackground;
 /************************************/
 /* Button Control                   */
 /************************************/
-public Figure myButton(str caption, void() action) {
+public Figure myButton(str caption, void() action, FProperty props...) {
 	bool hovered = false;
 
 	return overlay(
@@ -22,9 +22,9 @@ public Figure myButton(str caption, void() action) {
 				onMouseExit(void(){hovered = false;}),
 				onMouseDown(btnClickHandler(action))
 				),
-			text(toUpperCase(caption), fontColor("white"), fontBold(true)),
+			text(toUpperCase("  "+caption+"  "), fontColor("white"), fontBold(true)),
 			box(lineWidth(0),fillColor(Color () {return color("white", (hovered ? 1.0 : 0.0) );}),vresizable(false),vsize(3), bottom())], 
-			resizable(false), height(60), width(140));
+			props);
 }
 
 private bool(int, map[KeyModifier, bool]) btnClickHandler(void() action) = bool(int btn, map[KeyModifier, bool] m) {
@@ -122,7 +122,7 @@ public Figure page(str title, Figure menu, Figure main, Figure footer) {
 		  	footer
 	       ]),
 	  fillColor(ColorBackground), lineWidth(0), std(font("Dialog"))
-      );
+	  /*,hsize(1600), vsize(1000), resizable(false)*/);
 }
 
 /************************************/

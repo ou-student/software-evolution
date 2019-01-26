@@ -20,7 +20,6 @@ import Visualisation::Controls;
 import lang::java::jdt::m3::Core;
 import analysis::graphs::Graph;
 
-private loc currentSelectedMethod;
 private int currentIndex = 0;
 
 void onPBNewLocationSelected(loc location) {
@@ -48,6 +47,8 @@ void onCTPMethodSelected(loc method) {
 
 
 void begin() {
+	currentIndex = 0;
+
 	bool miReInit = mi_initialize(false);
 	pb_initialize(miReInit);
 	
@@ -80,7 +81,7 @@ public Figure createMain(Figure left, Figure right) {
 	return box(
 		hcat(
 		[
-			space(left, hsize(400), hresizable(false)),
+			space(left, hsize(350), hresizable(false)),
 			space(right)
 		],
 		gap(48), startGap(true), endGap(true)),
