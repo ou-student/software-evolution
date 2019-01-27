@@ -15,6 +15,7 @@ import Utils::MetricsInformation;
 import Visualisation::ProjectBrowser;
 import Visualisation::MethodInformationPanel;
 import Visualisation::ComplexityTreemapPanel;
+import Visualisation::AnalysisResults;
 import Visualisation::Controls;
 
 import lang::java::jdt::m3::Core;
@@ -30,6 +31,7 @@ void onPBNewLocationSelected(loc location) {
 		ctp_setMethods(location.path, pb_getMethodsOfSelectedLocation());
 		currentIndex = 2;
 	}
+	updateMaintainabilityRankingPanel();
 }
 
 /**
@@ -37,12 +39,20 @@ void onPBNewLocationSelected(loc location) {
  */
 void onMIPNewMethodSelected(loc method) {
 	pb_setLocation(method);
+	updateMaintainabilityRankingPanel();
 }
 
 void onCTPMethodSelected(loc method) {
 	pb_setLocation(method);
 	mip_setCurrentMethod(method);
 	currentIndex = 1;
+	updateMaintainabilityRankingPanel();
+}
+
+void updateMaintainabilityRankingPanel(){
+	currentProject = pb_getCurrentProject();
+	results = mi_getResultsOfProject(currentProject);
+	mrp_setResults(results);
 }
 
 
@@ -58,18 +68,17 @@ void begin() {
 	
 	ctp_addMethodSelectedEventListener(onCTPMethodSelected);
 	
-	menu = menuBar([]);
-	
 	render(
 		page("Maintainance Analyzer",
-			 menu,
+			 menuBar([]),
 			 createMain(
 			 	panel(projectBrowser(), "", 0),
-				 	fswitch(int(){return currentIndex;},[
-				 		welcomePanel(),
-				 		methodInformationPanel(),
-				 		complexityTreemapPanel()
-				 	])
+			 	maintainabilityRankingPanel(),
+			 	fswitch(int(){return currentIndex;},[
+			 		welcomePanel(),
+			 		methodInformationPanel(),
+			 		complexityTreemapPanel()
+			 	])
 				 ),
 			 footer("Copyright by A. Walgreen & E. Postma ©2019\t")
 		)
@@ -77,11 +86,15 @@ void begin() {
 }
 
 
-public Figure createMain(Figure left, Figure right) {
+public Figure createMain(Figure leftTop, Figure leftBottom, Figure right) {
 	return box(
 		hcat(
 		[
-			space(left, hsize(350), hresizable(false)),
+			vcat(
+			[
+				space(leftTop),
+				space(leftBottom, resizable(false), height(120))
+			], hsize(350), hresizable(false), vgap(48)),
 			space(right)
 		],
 		gap(48), startGap(true), endGap(true)),

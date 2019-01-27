@@ -7,6 +7,37 @@ import Set;
 import Map;
 import String;
 
+private Results _results = EmptyResults;
+
+/*****************************/
+/* Initializer				 */
+/*****************************/
+private bool _isInitialized = false;
+
+public void mrp_initialize() {
+	if(!_isInitialized) {	
+		
+		_isInitialized = true;
+	}
+	
+	_results = EmptyResults;
+}
+
+/*****************************/
+/* Redraw panel				 */
+/*****************************/
+private bool _redraw = false;
+private void redraw() { _redraw = true; }
+private bool shouldRedraw() { bool temp = _redraw; _redraw = false; return temp; }
+
+/**
+ * Sets new results
+ */
+public void mrp_setResults(Results results) {
+	_results = results;
+	redraw();
+}
+
 /**
  * Defines the rank fill colors.
  */
@@ -131,22 +162,28 @@ public Results CurrentResults = EmptyResults;
 /**
  * Creates a Figure representing the overall maintainability ranking table.
  */
-public Figure createTable(Results results) {
-	return panel(grid([
-		[ label("Metrics:", [fontBold(true)]) ],
-		[ label("Volume"), icon(results.volume)],
-		[ label("Unit Size"), icon("unit size", results.unitSize)],
-		[ label("Complexity"), icon("complexity", results.complexity)],
-		[ label("Duplication"), icon(results.duplicates)],
-		[ box() ],		
-		[ label("Quality Aspects:", [fontBold(true)]) ],
-		[ label(MaintainabilityAspects.analyzability), icon(results.score.aspects[MaintainabilityAspects.analyzability])],		
-		[ label(MaintainabilityAspects.changeability), icon(results.score.aspects[MaintainabilityAspects.changeability])],
-		[ label(MaintainabilityAspects.stability), icon(results.score.aspects[MaintainabilityAspects.stability])],
-		[ label(MaintainabilityAspects.testability), icon(results.score.aspects[MaintainabilityAspects.testability])],
-		[ box() ],
-		[ label("Overall Maintainability Ranking:", [fontBold(true)]), icon(results.score.overall)]			
-	], [top(), resizable(false), height(120), std(lineWidth(0)), std(fontSize(11)), std(hresizable(false))]),
-		"System Maintainability Ranking", 5
-	); 
+public Figure maintainabilityRankingPanel() {
+
+	return computeFigure(
+		shouldRedraw,
+		Figure () {
+			return panel(grid([
+				[ label("Metrics:", [fontBold(true)]) ],
+				[ label("Volume"), icon(_results.volume)],
+				[ label("Unit Size"), icon("unit size", _results.unitSize)],
+				[ label("Complexity"), icon("complexity", _results.complexity)],
+				[ label("Duplication"), icon(_results.duplicates)],
+				[ box() ],		
+				[ label("Quality Aspects:", [fontBold(true)]) ],
+				[ label(MaintainabilityAspects.analyzability), icon(_results.score.aspects[MaintainabilityAspects.analyzability])],		
+				[ label(MaintainabilityAspects.changeability), icon(_results.score.aspects[MaintainabilityAspects.changeability])],
+				[ label(MaintainabilityAspects.stability), icon(_results.score.aspects[MaintainabilityAspects.stability])],
+				[ label(MaintainabilityAspects.testability), icon(_results.score.aspects[MaintainabilityAspects.testability])],
+				[ box() ],
+				[ label("Overall Maintainability Ranking:", [fontBold(true)]), icon(_results.score.overall)]			
+			], [top(), std(lineWidth(0)), std(fontSize(11)), std(hresizable(false))]),
+				"System Maintainability Ranking", 5
+			); 
+		}
+	);
 }

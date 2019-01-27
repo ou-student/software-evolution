@@ -65,5 +65,5 @@ public void run(loc project) {
 	Results results = <volumeAnalysisResult,unitSizeAnalysisResult,complexityAnalysisResult,duplicationAnalysisResult,maintainabilityScore>;
 	
 	
-	//printResults(results, project.uri);	
+	printResults(results, project.uri);	
 }

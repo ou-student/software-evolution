@@ -1,5 +1,7 @@
 module Visualisation::Controls
 
+import List;
+
 import vis::Figure;
 import vis::KeySym;
 import String;
@@ -102,13 +104,16 @@ public Figure panel(Figure content, str title, int margin) {
 /* MenuBar Control                  */
 /************************************/
 public Figure menuBar(Figure menuItems...) {
-	return box(
-		// Content
-		hcat(menuItems, resizable(false), left()),
-		
-		// Styling
-		vresizable(false), shadow(true), height(60), left(), fillColor(ColorPLight), lineWidth(0)
-		);
+	if(size(menuItems) > 0) {
+		return box(
+			// Content
+			hcat(menuItems, resizable(false), left()),
+			
+			// Styling
+			vresizable(false), shadow(true), height(60), left(), fillColor(ColorPLight), lineWidth(0)
+			);
+	}
+	return space(vresizable(false), height(0));
 }
 
 /************************************/
@@ -141,6 +146,13 @@ public Figure listItem(str label, bool(int, map[KeyModifier, bool]) callback) {
 /************************************/
 public FProperty popup(str t) {
 	return mouseOver(box(text(t),
+					 fillColor(ColorPopupBackground),
+					 grow(1.2),
+					 resizable(false)));
+}
+
+public FProperty popup(Figure content) {
+	return mouseOver(box(content,
 					 fillColor(ColorPopupBackground),
 					 grow(1.2),
 					 resizable(false)));

@@ -131,6 +131,7 @@ public void pb_setLocation(loc location) {
 		if(location in browseTree){
 			SelectedLocation = location;
 			pb_navigateTo(browseTree[location]);
+			CurrentProject = getProjectOfLocation(SelectedLocation);
 
 			redraw();
 		}
@@ -141,12 +142,13 @@ public void pb_navigateTo(loc location) {
 	if(location != CurrentLocation){
 		if(location in browseTree){
 			CurrentLocation = location;
-			CurrentProject = getProjectOfLocation(location);
 			
 			redraw();
 		}
 	}
 }
+
+public loc pb_getCurrentProject() = CurrentProject;
 
 public set[loc] pb_getMethodsOfSelectedLocation() {
 	return getMethodsOfLocation(SelectedLocation);
@@ -390,7 +392,8 @@ private map[loc location, loc parent] createBrowseTree(M3 model) {
 }
 
 private loc getProjectOfLocation(loc location){
-	if(isProject(location) || location == RootLocation) return location;
+	if(isProject(location)) return location;
+	if(location == RootLocation) return location;
 	
 	return getProjectOfLocation(browseTree[location]);
 }

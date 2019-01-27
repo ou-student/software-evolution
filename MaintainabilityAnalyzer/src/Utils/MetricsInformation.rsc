@@ -19,7 +19,7 @@ import Analyzers::DuplicationAnalyzer;
 import Analyzers::ComplexityAnalyzer;
 import Analyzers::MaintainabilityScoreAnalyzer;
 
-alias ProjectData = tuple[M3 model, UnitInfos unitInfos, set[LineCounts] lineCounts, Results results];
+alias ProjectData = tuple[M3 model, UnitInfos unitInfos, set[LineCounts] lineCounts, Duplications duplications, Results results];
 alias ProjectInformation = map[loc project, ProjectData information];
 private ProjectInformation database = ();
 
@@ -33,7 +33,7 @@ public bool mi_initialize(bool force) {
 		set[loc] projects = projects();
 		
 		for(p <- projects) {
-		
+	 
 			if(checkCacheFile(p)) continue;
 			
 			createM3ModelAndAddToDatabase(p);
@@ -76,7 +76,7 @@ private void createM3ModelAndAddToDatabase(loc project) {
 	try {
 		if(project == |project://MaintainabilityAnalyzer|) throw "This project"; 
 		M3 model = createM3FromEclipseProject(project);				
-		database[project] = <model, (), {}, EmptyResults>;
+		database[project] = <model, (), {}, (), EmptyResults>;
 		println(" Done");
 	}
 	catch: {
@@ -87,13 +87,20 @@ private void createM3ModelAndAddToDatabase(loc project) {
 public void mi_refreshProjectMetrics(loc project) {
 
 	ProjectData projectData = database[project];
+	Duplications duplications = ();
 	
 	set[LineCounts] lineCounts = {};
 	
 	for(decl <- projectData.model.declarations) {
+		//if(contains(decl.src.path, "junit")) continue;
+		//if(contains(decl.src.path, "/test/")) continue;
 		
 		if(isCompilationUnit(decl.name)) {
 			lineCounts += extractLinesOfCode(decl.src);
+		}
+		
+		if(isClass(decl.name)) {
+			duplications = extractDuplications(decl.src, duplications, 6);
 		}
 		
 		if(isMethod(decl.name) && !isAnonymous(decl.name)) {
@@ -107,12 +114,15 @@ public void mi_refreshProjectMetrics(loc project) {
 	VolumeAnalysisResult volumeAnalysisResult     	    = analyzeVolume(lineCounts);
 	UnitSizeAnalysisResult unitSizeAnalysisResult 	    = analyzeUnitSize(projectData.unitInfos.info); 
 	ComplexityAnalysisResult complexityAnalysisResult   = analyzeComplexity(projectData.unitInfos.info); 
-	DuplicationAnalysisResult duplicationAnalysisResult = analyzeDuplications((), volumeAnalysisResult.totalLinesOfCode);
+	DuplicationAnalysisResult duplicationAnalysisResult = analyzeDuplications(duplications, volumeAnalysisResult.totalLinesOfCode);
 	MaintainabilityScore maintainabilityScore 			= analyzeMaintainability(<volumeAnalysisResult.ranking, complexityAnalysisResult.ranking, duplicationAnalysisResult.ranking, unitSizeAnalysisResult.ranking, RankingUnknown>); 
 	
 	projectData.results = <volumeAnalysisResult,unitSizeAnalysisResult,complexityAnalysisResult,duplicationAnalysisResult,maintainabilityScore>;
 	
 	// Copy results over to database.
+	projectData.lineCounts = lineCounts;
+	projectData.duplications = duplications;
+	
 	database[project] = projectData;
 	
 	// Write to file
@@ -128,6 +138,12 @@ public void mi_refreshProjectMetrics(loc project) {
  * Returns all models in the information database.
  */
 public set[M3] mi_getModels() = database.information.model;
+
+public Results mi_getResultsOfProject(loc project) {
+	println(project);
+	if(isProject(project)) return database[project].results;
+	return EmptyResults;
+}
 
 /**
  * Returs a set of the successors of the given method.
