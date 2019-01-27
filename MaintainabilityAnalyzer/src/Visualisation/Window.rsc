@@ -6,7 +6,6 @@ import vis::Render;
 import vis::KeySym;
 import util::Math;
 
-
 import DataTypes;
 import Main;
 
@@ -23,6 +22,9 @@ import analysis::graphs::Graph;
 
 private int currentIndex = 0;
 
+/**
+ * Event listener for project browser new location selected.
+ */
 void onPBNewLocationSelected(loc location) {
 	if(isMethod(location)){
 		mip_setCurrentMethod(location);
@@ -42,6 +44,9 @@ void onMIPNewMethodSelected(loc method) {
 	updateMaintainabilityRankingPanel();
 }
 
+/**
+ * Event listener for complexity tree panel new selected method.
+ */
 void onCTPMethodSelected(loc method) {
 	pb_setLocation(method);
 	mip_setCurrentMethod(method);
@@ -49,13 +54,18 @@ void onCTPMethodSelected(loc method) {
 	updateMaintainabilityRankingPanel();
 }
 
+/**
+ * Updates the maintainability ranking panel.
+ */
 void updateMaintainabilityRankingPanel(){
 	currentProject = pb_getCurrentProject();
 	results = mi_getResultsOfProject(currentProject);
 	mrp_setResults(results);
 }
 
-
+/**
+ * Module entry point method.
+ */
 void begin() {
 	currentIndex = 0;
 
@@ -85,7 +95,13 @@ void begin() {
 	);
 }
 
-
+/**
+ * Creates a figure representing the main window.
+ * @param leftTop The figure to put in the left top.
+ * @param leftBottom The figure to put in the left bottom.
+ * @param right The figure for the right side area.
+ * @returns A Figure representing the composed main window.
+ */
 public Figure createMain(Figure leftTop, Figure leftBottom, Figure right) {
 	return box(
 		hcat(
@@ -102,6 +118,10 @@ public Figure createMain(Figure leftTop, Figure leftBottom, Figure right) {
 	);
 }
 
+/**
+ * Creates the welcome pannel.
+ * @returns A Figure representing the welcome panel.
+ */
 private Figure welcomePanel() {
 	return panel(
 				text(
@@ -111,5 +131,3 @@ private Figure welcomePanel() {
 				"Welcome to the Maintainability Analyzer"
 			);
 }
-
-

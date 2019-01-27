@@ -14,6 +14,9 @@ private Results _results = EmptyResults;
 /*****************************/
 private bool _isInitialized = false;
 
+/**
+ * Initializes the analysis results component.
+ */
 public void mrp_initialize() {
 	if(!_isInitialized) {	
 		
@@ -157,6 +160,9 @@ private Figure icon(DuplicationAnalysisResult result) {
 	return box(text(rank.rank, fontBold(true), rankFontColors[rank]), rankColors[rank], width(30), popup(content));
 }
 
+/**
+ * Contains the current results.
+ */
 public Results CurrentResults = EmptyResults;
 
 /**

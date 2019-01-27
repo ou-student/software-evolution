@@ -8,20 +8,20 @@ import vis::KeySym;
 import lang::java::jdt::m3::Core;
 import analysis::graphs::Graph;
 import util::Editors;
-
 import util::Math;
-
 import Utils::MetricsInformation;
-
 import Visualisation::Controls;
 
-private loc currentMethod = |unknown:///|;
+private loc currentMethod = NotFound;
 
 /*****************************/
 /* Initializer				 */
 /*****************************/
 private bool _isInitialized = false;
 
+/**
+ * Initializes the method information panel.
+ */
 public void mip_initialize() {
 	if(!_isInitialized) {
 		mip_addNewMethodSelectedEventListener(onNewMethodSelected);		
@@ -29,7 +29,7 @@ public void mip_initialize() {
 		_isInitialized = true;
 	}
 	
-	currentMethod = |unknown:///|;
+	currentMethod = NotFound;
 }
 
 /*****************************/
@@ -67,17 +67,26 @@ private void onNewMethodSelected(loc method) {
 	mip_setCurrentMethod(method);
 }
 
+/**
+ * Sets the specified location as the current method.
+ * @param method The location of the method.
+ */
 public void mip_setCurrentMethod(loc method) {
-
 	currentMethod = method;
 	redraw();
 }
 
+/**
+ * Clears the method information panel.
+ */
 public void mip_clearMethodInformationPanel() {
-	currentMethod = |unknown:///|;
+	currentMethod = NotFound;
 	redraw();
 }
 
+/**
+ * Returns a Figure representing the method information panel.
+ */
 public Figure methodInformationPanel() {
 	mip_initialize();
 
@@ -104,6 +113,11 @@ public Figure methodInformationPanel() {
 		);
 }
 
+/**
+ * Returns a Figure representing the line counts stacked bar graph for the specified location.
+ * @param location The location to get the bar graph for.
+ * @returns A Figure representing the line counts stacked bar graph.
+ */
 Figure getLineCountsFigure(loc location) {
 	LineCounts lc = mi_getLineCountsForMethod(location);
 	
@@ -126,6 +140,10 @@ Figure getLineCountsFigure(loc location) {
 	
 }
 
+/**
+ * Returns a Figure representing a graph for the current method.
+ * @returns A figure representing the graph for the current method.
+ */
 Figure getGraph(){
 	pred = mi_getPredecessors(currentMethod);
 	succ = mi_getSuccessors(currentMethod);
@@ -138,6 +156,9 @@ Figure getGraph(){
 	return graph(nodes, edges, hint("layered"), hgap(10), vgap(50));
 }
 
+/**
+ * Returns a Figure representing a graph node for the specified location.
+ */
 Figure graphNode(loc l) = box(
 							text(getName(l)), 
 							id(l.path),
@@ -147,13 +168,19 @@ Figure graphNode(loc l) = box(
 							popup("Filename: <l.file>\nFilepath: <l.path>"),
 							onMouseDown(graphNodeClickHandler(l))
 						  );
-						  
+
+/**
+ * Gets the node color for the specified location.
+ */
 Color getNodeColor(loc l) {
 	if(l == currentMethod) return color("red");
-	if(mi_getDeclaration(l) == |unknown:///|) return color("grey");
+	if(mi_getDeclaration(l) == NotFound) return color("grey");
 	return color("green");
 }
 
+/**
+ * Mouse click handler for graph nodes.
+ */
 private bool(int, map[KeyModifier, bool]) graphNodeClickHandler(loc location) = bool(int btn, map[KeyModifier, bool] mdf) {
 	if(btn == 1){
 		newMethodSelected(location);
@@ -162,6 +189,11 @@ private bool(int, map[KeyModifier, bool]) graphNodeClickHandler(loc location) = 
 	return false;
 };
 
+/**
+ * Gets the name for the specified location.
+ * @param l The location to get the name for.
+ * @returns A string representing the name.
+ */
 private str getName(loc l) {
 	return /^<n:.*>\(.*$/ := l.file ? n + "()" : l.file;	
 }

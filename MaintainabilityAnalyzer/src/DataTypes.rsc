@@ -86,3 +86,7 @@ public Results EmptyResults = <
 	)>
 >;
 
+/**
+ * The location that indicates some location was not found. 
+ */
+public loc NotFound = |unknown:///|;

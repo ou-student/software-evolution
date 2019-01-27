@@ -20,6 +20,9 @@ private set[UnitInfo] unitinfos = {};
 /*****************************/
 private bool _isInitialized = false;
 
+/**
+ * Initializes the complexity treemap panel.
+ */
 public void ctp_initialize() {
 	if(!_isInitialized) {		
 		
@@ -55,13 +58,20 @@ private void methodSelected(loc method) {
 	for(l <- methodSelectedEventListeners) l(method);
 }
 
-
+/**
+ * Sets the methods to display in the treemap.
+ * @param label The label for the treemap.
+ * @param The set of type location containing the methods locations.
+ */
 public void ctp_setMethods(str label, set[loc] methods) {
 	title = label;
 	unitinfos = { mi_getUnitInfo(m) | m <- methods };
 	redraw();
 }
 
+/**
+ * Returns a computeFigure delegate to draw the complexity treemap panel.
+ */
 public Figure complexityTreemapPanel() {
 	return computeFigure(
 		shouldRedraw,
@@ -77,6 +87,11 @@ public Figure complexityTreemapPanel() {
 	);
 }
 
+/**
+ * Returns an FProperty representing a mouse over popup for the specified UnitInfo.
+ * @param s The UnitInfo to return the FProperty for.
+ * @returns An FProperty representing the popup.
+ */
 public FProperty popup(UnitInfo s) {
 	return mouseOver(box(vcat([text(s.unit.file, fontBold(true), left()), text("Complexity:\t<s.complexity>", fontItalic(true), left()), text("Lines of code:\t<s.size>", fontItalic(true), left())], vgap(5)),
 					 fillColor(ColorPopupBackground),
@@ -84,6 +99,12 @@ public FProperty popup(UnitInfo s) {
 					 resizable(false)));
 }
 
+/**
+ * Creates a Figure representing the treemap box.
+ * @param s The UnitInfo to create the box for.
+ * @param c The box fill color.
+ * @returns A Figure representing the box for the UnitInfo.
+ */
 private Figure createTreemapBox(UnitInfo s, Color c) {
 	return box(
 			   area(s.size),
@@ -94,8 +115,15 @@ private Figure createTreemapBox(UnitInfo s, Color c) {
 			);
 }
 
+/**
+ * Gets a label for the specified method.
+ * @param method The location of the method to get the label for.
+ */
 private str getLabel(loc method) = ((/^<n:.*>\(.*$/ := method.file) ? n : method.file) + "()";
 
+/**
+ * Mouse click handler for treemap boxes.
+ */
 private bool(int, map[KeyModifier, bool]) treemapBoxClickHandler(loc location) = bool(int btn, map[KeyModifier, bool] mdf) {
 	if(btn == 1 && mdf[\modCtrl()] == true){
 		edit(mi_getDeclaration(location));

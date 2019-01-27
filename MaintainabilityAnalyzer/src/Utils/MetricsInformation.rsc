@@ -28,6 +28,11 @@ private UnitInfos globalUnitInfos = ();
 
 private bool _isInitialized = false;
 
+/**
+ * Initializes the metrics information module.
+ * @param force True to force a (re)initialization, false otherwise.
+ * @return True if the module is initialized, false otherwise. 
+ */
 public bool mi_initialize(bool force) {
 	if(!_isInitialized || force) {
 		set[loc] projects = projects();
@@ -48,6 +53,11 @@ public bool mi_initialize(bool force) {
 	return false;
 }
 
+/**
+ * Checks whether a cache file exists for the specified project location.
+ * @param project The location of the project.
+ * @return True if a cache file exists, false otherwise.
+ */
 private bool checkCacheFile(loc project) {
 	print("Check for existing metrics file...");
 	
@@ -70,6 +80,10 @@ private bool checkCacheFile(loc project) {
 	return true;
 }
 
+/**
+ * Creates an M3 model instance adding it to project information database map.\
+ * @param location The location of the project to create the M3 for.
+ */
 private void createM3ModelAndAddToDatabase(loc project) {
 	print("Creating M3 for <project>...");
 				
@@ -84,8 +98,11 @@ private void createM3ModelAndAddToDatabase(loc project) {
 	}
 }
 
+/**
+ * Refreshes the project metrics data for the specified project.
+ * @param location The location of the project to refresh the metrics data for.
+ */
 public void mi_refreshProjectMetrics(loc project) {
-
 	ProjectData projectData = database[project];
 	Duplications duplications = ();
 	
@@ -139,6 +156,11 @@ public void mi_refreshProjectMetrics(loc project) {
  */
 public set[M3] mi_getModels() = database.information.model;
 
+/**
+ * Gets the Results for the specified project.
+ * @param project The location of the project to get the results for.
+ * @returns A Results instance containing the project results.
+ */
 public Results mi_getResultsOfProject(loc project) {
 	println(project);
 	if(isProject(project)) return database[project].results;
@@ -146,7 +168,7 @@ public Results mi_getResultsOfProject(loc project) {
 }
 
 /**
- * Returs a set of the successors of the given method.
+ * Returns a set of the successors of the given method.
  */
 public set[loc] mi_getSuccessors(loc from) {
 	return successors(global.methodInvocation, from);
@@ -159,22 +181,37 @@ public set[loc] mi_getPredecessors(loc from) {
 	return predecessors(global.methodInvocation, from);
 }
 
+/**
+ * Gets the declaration associated with the specified location.
+ * @param src The location to get the declaration for.
+ * @returns The declaration location.
+ */
 public loc mi_getDeclaration(loc src) {
 	try {
 		return toMapUnique(global.declarations)[src];
 	}
 	catch: {
-		return |unknown:///|;
+		return NotFound;
 	}
 }
 
+/**
+ * Gets the line counts for the specified method location.
+ * @param method The location of the method.
+ * @returns The LineCounts for the method.
+ */
 public LineCounts mi_getLineCountsForMethod(loc method) {
 	if(isMethod(method)) {
 		return extractLinesOfCode(method);
 	}
-	return <|unknown:///|,0,0,0,0>;
+	return <NotFound,0,0,0,0>;
 }
 
+/**
+ * Gets the unit complexity for the specified location.
+ * @param location The location to get the complexity for.
+ * @returns An integer representing the complexity, or -1 if the complexity is not available.
+ */
 public int mi_getUnitComplexity(loc location) {
 	int complexity = -1;
 
@@ -190,6 +227,11 @@ public int mi_getUnitComplexity(loc location) {
 	return complexity;
 }
 
+/**
+ * Gets the number of lines of code for the specified location.
+ * @param location The location to get the lines of code for.
+ * @returns An integer representing the number of lines of code, or -1 if loc is not available.
+ */
 public int mi_getUnitLOC(loc location) {
 	int LOC = -1;
 
@@ -205,9 +247,13 @@ public int mi_getUnitLOC(loc location) {
 	return LOC;
 }
 
-public UnitInfo mi_getUnitInfo(loc location) {
-	
-	UnitInfo retval = <|unknown:///|, 0, 0>;
+/**
+ * Gets the UnitInfo for the specified location.
+ * @param location The location to get the UnitInfo for.
+ * @returns The unit info for the specified location.
+ */
+public UnitInfo mi_getUnitInfo(loc location) {	
+	UnitInfo retval = <NotFound, 0, 0>;
 
 	if(isMethod(location)) {		
 		try{
@@ -218,8 +264,7 @@ public UnitInfo mi_getUnitInfo(loc location) {
 		}	
 	}
 	
-	return retval;
-	
+	return retval;	
 }
 
 
