@@ -1,5 +1,7 @@
 module Visualisation::Controls
 
+import List;
+
 import vis::Figure;
 import vis::KeySym;
 import String;
@@ -13,7 +15,7 @@ public Color ColorPopupBackground = ColorBackground;
 /************************************/
 /* Button Control                   */
 /************************************/
-public Figure myButton(str caption, void() action) {
+public Figure myButton(str caption, void() action, FProperty props...) {
 	bool hovered = false;
 
 	return overlay(
@@ -22,9 +24,9 @@ public Figure myButton(str caption, void() action) {
 				onMouseExit(void(){hovered = false;}),
 				onMouseDown(btnClickHandler(action))
 				),
-			text(toUpperCase(caption), fontColor("white"), fontBold(true)),
+			text(toUpperCase("  "+caption+"  "), fontColor("white"), fontBold(true)),
 			box(lineWidth(0),fillColor(Color () {return color("white", (hovered ? 1.0 : 0.0) );}),vresizable(false),vsize(3), bottom())], 
-			resizable(false), height(60), width(140));
+			props);
 }
 
 private bool(int, map[KeyModifier, bool]) btnClickHandler(void() action) = bool(int btn, map[KeyModifier, bool] m) {
@@ -102,13 +104,16 @@ public Figure panel(Figure content, str title, int margin) {
 /* MenuBar Control                  */
 /************************************/
 public Figure menuBar(Figure menuItems...) {
-	return box(
-		// Content
-		hcat(menuItems, resizable(false), left()),
-		
-		// Styling
-		vresizable(false), shadow(true), height(60), left(), fillColor(ColorPLight), lineWidth(0)
-		);
+	if(size(menuItems) > 0) {
+		return box(
+			// Content
+			hcat(menuItems, resizable(false), left()),
+			
+			// Styling
+			std(vresizable(false)), shadow(true), std(height(60)), left(), fillColor(ColorPLight), lineWidth(0)
+			);
+	}
+	return space(vresizable(false), height(0));
 }
 
 /************************************/
@@ -122,7 +127,7 @@ public Figure page(str title, Figure menu, Figure main, Figure footer) {
 		  	footer
 	       ]),
 	  fillColor(ColorBackground), lineWidth(0), std(font("Dialog"))
-      );
+	  /*,hsize(1600), vsize(1000), resizable(false)*/);
 }
 
 /************************************/
@@ -141,6 +146,13 @@ public Figure listItem(str label, bool(int, map[KeyModifier, bool]) callback) {
 /************************************/
 public FProperty popup(str t) {
 	return mouseOver(box(text(t),
+					 fillColor(ColorPopupBackground),
+					 grow(1.2),
+					 resizable(false)));
+}
+
+public FProperty popup(Figure content) {
+	return mouseOver(box(content,
 					 fillColor(ColorPopupBackground),
 					 grow(1.2),
 					 resizable(false)));

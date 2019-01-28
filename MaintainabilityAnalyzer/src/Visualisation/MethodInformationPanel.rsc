@@ -1,17 +1,36 @@
 module Visualisation::MethodInformationPanel
 
 import Prelude;
+import DataTypes;
 import vis::Figure;
 import vis::Render;
 import vis::KeySym;
 import lang::java::jdt::m3::Core;
 import analysis::graphs::Graph;
 import util::Editors;
-
+import util::Math;
+import Utils::MetricsInformation;
 import Visualisation::Controls;
 
-private M3 currentModel = m3(|unknown:///|);
-private loc currentMethod = |unknown:///|;
+private loc currentMethod = NotFound;
+
+/*****************************/
+/* Initializer				 */
+/*****************************/
+private bool _isInitialized = false;
+
+/**
+ * Initializes the method information panel.
+ */
+public void mip_initialize() {
+	if(!_isInitialized) {
+		mip_addNewMethodSelectedEventListener(onNewMethodSelected);		
+		
+		_isInitialized = true;
+	}
+	
+	currentMethod = NotFound;
+}
 
 /*****************************/
 /* Redraw panel				 */
@@ -45,28 +64,31 @@ private void newMethodSelected(loc method) {
  * Local event handler for selecting new method.
  */
 private void onNewMethodSelected(loc method) {
-	mip_setCurrentMethod(currentModel, method);
+	mip_setCurrentMethod(method);
 }
 
-public void mip_setCurrentMethod(M3 model, loc method) {
-
-	if(method in methods(model)) {
-		currentModel = model;
-		currentMethod = method;
-		redraw();
-	} else {
-		println("Given method is not in given model!");
-	}
-}
-
-public void mip_clearMethodInformationPanel() {
-	currentModel = m3(|unknown:///|);
-	currentMethod = |unknown:///|;
+/**
+ * Sets the specified location as the current method.
+ * @param method The location of the method.
+ */
+public void mip_setCurrentMethod(loc method) {
+	currentMethod = method;
 	redraw();
 }
 
+/**
+ * Clears the method information panel.
+ */
+public void mip_clearMethodInformationPanel() {
+	currentMethod = NotFound;
+	redraw();
+}
+
+/**
+ * Returns a Figure representing the method information panel.
+ */
 public Figure methodInformationPanel() {
-	mip_addNewMethodSelectedEventListener(onNewMethodSelected);
+	mip_initialize();
 
 	return computeFigure(
 			shouldRedraw,
@@ -75,12 +97,14 @@ public Figure methodInformationPanel() {
 					vcat([
 						label("Unit Maintainability Ranking:"),
 						box(hscrollable(getGraph())),
-						hcat([
-							text("Complexity: ...", left()),
-							text("LOC: ...", left()),
-							text("Unitsize: ...", left()),
-							myButton("View source", void(){edit(getDeclaration(currentMethod));})
-						], vsize(60), vresizable(false), justify(true))
+						box(
+							hcat([
+								text("Complexity: <mi_getUnitComplexity(currentMethod)>", left()),
+								getLineCountsFigure(currentMethod),
+								text("Unitsize: <mi_getUnitLOC(currentMethod)>", left()),
+								myButton("View source", void(){edit(mi_getDeclaration(currentMethod));}, hresizable(false), width(60))
+							],hgap(40), vsize(40), vresizable(false), startGap(true), endGap(true)),
+						vsize(60), vresizable(false))
 						
 					]),
 					getName(currentMethod)
@@ -89,25 +113,52 @@ public Figure methodInformationPanel() {
 		);
 }
 
-private loc getDeclaration(loc location) {
-	declarations = currentModel.declarations[location];
-	if(size(declarations) > 0)
-		return getOneFrom(currentModel.declarations[location]);
-	return location;
+/**
+ * Returns a Figure representing the line counts stacked bar graph for the specified location.
+ * @param location The location to get the bar graph for.
+ * @returns A Figure representing the line counts stacked bar graph.
+ */
+Figure getLineCountsFigure(loc location) {
+	LineCounts lc = mi_getLineCountsForMethod(location);
+	
+	comments = (0.00 + lc.comment) / (0.000001 + lc.total);
+	blank = (0.00 + lc.blank) / (0.000001 + lc.total);
+	code = 1.0 - comments - blank;
+	
+	return 
+		hcat([
+			text("Line Counts:"),
+			box(
+				hcat([
+					box(/*text("<lc.comment>", fontColor("white")),*/fillColor("black"), lineWidth(0), hshrink(comments)),
+					box(/*text("<lc.code>",    fontColor("white")),*/fillColor("green"), lineWidth(0), hshrink(code)),
+					box(/*text("<lc.blank>",   fontColor("white")),*/fillColor("white"), lineWidth(0), hshrink(blank))
+				],std(vsize(40))), popup("Comments:\t <lc.comment>\nCode:\t\t <lc.code>\nBlank:\t\t <lc.blank>"),
+				std(vresizable(false))
+			)
+		], hgap(5));
+	
 }
 
+/**
+ * Returns a Figure representing a graph for the current method.
+ * @returns A figure representing the graph for the current method.
+ */
 Figure getGraph(){
-	pred = predecessors(currentModel.methodInvocation, currentMethod);
-	succ = successors(currentModel.methodInvocation, currentMethod);
+	pred = mi_getPredecessors(currentMethod);
+	succ = mi_getSuccessors(currentMethod);
 	
 	nodes = [ graphNode(pr) | pr <- (pred + succ +{currentMethod}) ];
 	
 	edges = [ edge(method.path, currentMethod.path) | method <- pred ];
 	edges += [ edge(currentMethod.path, method.path) | method <- succ ];
 	
-	return graph(nodes, edges, hint("layered"),gap(50));
+	return graph(nodes, edges, hint("layered"), hgap(10), vgap(50));
 }
 
+/**
+ * Returns a Figure representing a graph node for the specified location.
+ */
 Figure graphNode(loc l) = box(
 							text(getName(l)), 
 							id(l.path),
@@ -117,13 +168,19 @@ Figure graphNode(loc l) = box(
 							popup("Filename: <l.file>\nFilepath: <l.path>"),
 							onMouseDown(graphNodeClickHandler(l))
 						  );
-						  
+
+/**
+ * Gets the node color for the specified location.
+ */
 Color getNodeColor(loc l) {
 	if(l == currentMethod) return color("red");
-	if(l notin methods(currentModel)) return color("grey");
-	return color("blue");
+	if(mi_getDeclaration(l) == NotFound) return color("grey");
+	return color("green");
 }
 
+/**
+ * Mouse click handler for graph nodes.
+ */
 private bool(int, map[KeyModifier, bool]) graphNodeClickHandler(loc location) = bool(int btn, map[KeyModifier, bool] mdf) {
 	if(btn == 1){
 		newMethodSelected(location);
@@ -132,48 +189,11 @@ private bool(int, map[KeyModifier, bool]) graphNodeClickHandler(loc location) = 
 	return false;
 };
 
+/**
+ * Gets the name for the specified location.
+ * @param l The location to get the name for.
+ * @returns A string representing the name.
+ */
 private str getName(loc l) {
 	return /^<n:.*>\(.*$/ := l.file ? n + "()" : l.file;	
-}
-
-public void testModule() {
-	model = createM3FromEclipseProject(|project://smallsql|);
-	met = |java+method:///smallsql/database/Columns/copy()|;
-	
-	//for(m <- sort(domain(model.containment))) {
-	//	println(m);
-	//}
-	
-	setCurrentMethod(model, met);
-	
-	
-	//render(methodInformationPanel());
-	
-	//for(meth <- currentModel.methodInvocation) {
-	//	println(meth);
-	//}
-	//
-	//m = predecessors(currentModel.methodInvocation, currentMethod);
-	//s = successors(currentModel.methodInvocation, currentMethod);
-	//
-	//nodes = [ graphNode(pr) | pr <- (m+s+{currentMethod}) ];
-	//println(nodes);
-	//
-	//edges = [ edge(pr.path, currentMethod.path) | pr <- m ];
-	//edges += [ edge(currentMethod.path, pr.path) | pr <- s ];
-	//println(edges);
-	
-		
-	//println("Is used in: ");
-	//for(pr <- m) {
-	//	println(pr);
-	//}
-	//
-	//println();
-	//println("Uses: ");
-	//for(suc <- s) {
-	//	println(suc);
-	//}
-	
-	//println(currentMethod);
 }

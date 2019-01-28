@@ -19,7 +19,7 @@ private map[Rank rank, MetricTresholds tresholds] tresholds = (
  * @param facts The set of UnitInfo to analyze.
  * @return A tuple of type Rank and RiskEvaluation containing the analysis results.
  **/
-public ComplexityAnalysisResult analyzeComplexity(UnitInfos facts) {
+public ComplexityAnalysisResult analyzeComplexity(set[UnitInfo] facts) {
 	RiskEvaluation riskEvaluation = evaluateRisk(facts);
 	Rank rank = Rankings.veryLow;	
 	
@@ -44,7 +44,7 @@ public ComplexityAnalysisResult analyzeComplexity(UnitInfos facts) {
  * @param counts The set that contains the LineCounts to sum the number of lines of code for.
  * @return An int representing the sum of the number of lines of code.
  **/
-private int sumCode(UnitInfos units) = sum([ u.size | u <- units]);
+private int sumCode(set[UnitInfo] units) = sum([ u.size | u <- units]);
 
 /**
  * Calculates the percentage of the total for the specified values.
@@ -59,7 +59,7 @@ private num calculatePercentage(num linesOfCode, num total) = (0.00 + linesOfCod
  * @param facts The set of UnitInfo to evaluate the risk for.
  * @return A RiskEvaluation representing the risk evaluation results.
  **/
-private RiskEvaluation evaluateRisk(UnitInfos facts) {
+private RiskEvaluation evaluateRisk(set[UnitInfo] facts) {
 	num totalLinesOfCode = sumCode(facts);
 	rel[RiskCategory category, UnitInfo unitinfo] unitsInCategory = { <determineRisk(u.complexity), u> | u <- facts };
 	

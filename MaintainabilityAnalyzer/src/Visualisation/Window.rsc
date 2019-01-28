@@ -5,71 +5,129 @@ import vis::Figure;
 import vis::Render;
 import vis::KeySym;
 import util::Math;
-import util::Editors;
 
 import DataTypes;
 import Main;
 
+import Utils::MetricsInformation;
+
 import Visualisation::ProjectBrowser;
 import Visualisation::MethodInformationPanel;
 import Visualisation::ComplexityTreemapPanel;
+import Visualisation::AnalysisResults;
+import Visualisation::SettingsPanel;
 import Visualisation::Controls;
 
 import lang::java::jdt::m3::Core;
 import analysis::graphs::Graph;
 
-private loc currentSelectedMethod;
+private int previousIndex = 0;
 private int currentIndex = 0;
 
-void onPBNewLocationSelected(M3 model, loc location) {
+/**
+ * Event listener for project browser new location selected.
+ */
+void onPBNewLocationSelected(loc location) {
 	if(isMethod(location)){
-		mip_setCurrentMethod(model, location);
+		mip_setCurrentMethod(location);
 		currentIndex = 1;
 	} else {
+		ctp_setMethods(location.path, pb_getMethodsOfSelectedLocation());
 		currentIndex = 2;
 	}
+	updateMaintainabilityRankingPanel();
 }
 
 /**
  * Event listener for MethodInformationPanel new selected method.
  */
 void onMIPNewMethodSelected(loc method) {
-	println("Selected new method <method>");
 	pb_setLocation(method);
+	updateMaintainabilityRankingPanel();
 }
 
+/**
+ * Event listener for complexity tree panel new selected method.
+ */
+void onCTPMethodSelected(loc method) {
+	pb_setLocation(method);
+	mip_setCurrentMethod(method);
+	currentIndex = 1;
+	updateMaintainabilityRankingPanel();
+}
 
+/**
+ * Updates the maintainability ranking panel.
+ */
+void updateMaintainabilityRankingPanel(){
+	currentProject = pb_getCurrentProject();
+	results = mi_getResultsOfProject(currentProject);
+	mrp_setResults(results);
+}
+
+void settingsPanelButtonCallback() {
+	previousIndex = currentIndex;
+	currentIndex = 3;
+} 
+
+void settingsPanelClosed(){
+	currentIndex = previousIndex;
+}
+
+/**
+ * Module entry point method.
+ */
 void begin() {
+	previousIndex = 0;
+	currentIndex = 0;
 
-	pb_initialize();
-
+	bool miReInit = mi_initialize(false);
+	pb_initialize(miReInit);
+	sp_initialize();
+	
 	pb_addNewLocationSelectedEventListener(onPBNewLocationSelected);
+	pb_addProjectRefreshRequestEventListener(mi_refreshProjectMetrics);
 	mip_addNewMethodSelectedEventListener(onMIPNewMethodSelected);
 	
-	menu = menuBar([]);
+	sp_addColorschemeChangedEventListener(ctp_setColorscheme);
+	sp_addSettingsSavedEventListener(settingsPanelClosed);
+	
+	ctp_addMethodSelectedEventListener(onCTPMethodSelected);
 	
 	render(
 		page("Maintainance Analyzer",
-			 menu,
+			 menuBar([myButton("Settings", settingsPanelButtonCallback, vresizable(false), height(48))]),
 			 createMain(
 			 	panel(projectBrowser(), "", 0),
-				 	fswitch(int(){return currentIndex;},[
-				 		welcomePanel(),
-				 		methodInformationPanel(),
-				 		complexityTreemapPanel()
-				 	])
+			 	maintainabilityRankingPanel(),
+			 	fswitch(int(){return currentIndex;},[
+			 		welcomePanel(),
+			 		methodInformationPanel(),
+			 		complexityTreemapPanel(),
+			 		settingsPanel()
+			 	])
 				 ),
 			 footer("Copyright by A. Walgreen & E. Postma ©2019\t")
 		)
 	);
 }
 
-
-public Figure createMain(Figure left, Figure right) {
+/**
+ * Creates a figure representing the main window.
+ * @param leftTop The figure to put in the left top.
+ * @param leftBottom The figure to put in the left bottom.
+ * @param right The figure for the right side area.
+ * @returns A Figure representing the composed main window.
+ */
+public Figure createMain(Figure leftTop, Figure leftBottom, Figure right) {
 	return box(
 		hcat(
 		[
-			space(left, hsize(400), hresizable(false)),
+			vcat(
+			[
+				space(leftTop),
+				space(leftBottom, resizable(false), height(120))
+			], hsize(350), hresizable(false), vgap(48)),
 			space(right)
 		],
 		gap(48), startGap(true), endGap(true)),
@@ -77,6 +135,10 @@ public Figure createMain(Figure left, Figure right) {
 	);
 }
 
+/**
+ * Creates the welcome pannel.
+ * @returns A Figure representing the welcome panel.
+ */
 private Figure welcomePanel() {
 	return panel(
 				text(
@@ -86,5 +148,3 @@ private Figure welcomePanel() {
 				"Welcome to the Maintainability Analyzer"
 			);
 }
-
-

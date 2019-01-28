@@ -19,7 +19,7 @@ public Ranking Rankings = <
 // Defined seperately as this is an exceptional case that should be outside of the common Rankings.  
 public Rank RankingUnknown = <"?", "Not assessed", 0>;
 
-alias RiskValues = tuple[UnitInfos units, int linesOfCode, num percentage];
+alias RiskValues = tuple[set[UnitInfo] units, int linesOfCode, num percentage];
 
 alias MetricTresholds = tuple[num moderate, num high, num veryHigh];
 
@@ -47,13 +47,15 @@ alias LinesOfCode = list[LineOfCode];
 
 
 alias UnitInfo = tuple[loc unit, int size, int complexity];
-alias UnitInfos = set[UnitInfo];
+alias UnitInfos = map[loc unit, UnitInfo info];
 
 alias VolumeAnalysisResult = tuple[Rank ranking, int totalLinesOfCode, int codeLines, int blankLines, int commentLines, set[LineCounts] counts];
 
 alias UnitSizeAnalysisResult = tuple[Rank ranking, RiskEvaluation risk, int unitsCount];
 
 alias ComplexityAnalysisResult = tuple[Rank ranking, RiskEvaluation risk, int unitsCount];
+
+alias UnitAnalysisResult = tuple[Rank ranking, RiskEvaluation risk, int unitsCount];
 
 alias DuplicationAnalysisResult = tuple[Rank ranking, int totalLinesOfCode, int duplicateLines, num percentage];
 
@@ -71,4 +73,20 @@ alias MetricRankings = tuple[Rank volume, Rank complexity, Rank duplication, Ran
 
 alias MaintainabilityScore = tuple[Rank overall,  map[str aspect, Rank rank] aspects];
 					  
-					  
+public Results EmptyResults = <
+	<RankingUnknown, 0, 0, 0, 0, {}>,
+	<RankingUnknown, (), 0>,
+	<RankingUnknown, (), 0>,
+	<RankingUnknown, 0, 0, 0>,
+	<RankingUnknown, (
+		MaintainabilityAspects.analyzability:RankingUnknown,
+		MaintainabilityAspects.changeability:RankingUnknown,
+		MaintainabilityAspects.testability:RankingUnknown,
+		MaintainabilityAspects.stability:RankingUnknown
+	)>
+>;
+
+/**
+ * The location that indicates some location was not found. 
+ */
+public loc NotFound = |unknown:///|;
