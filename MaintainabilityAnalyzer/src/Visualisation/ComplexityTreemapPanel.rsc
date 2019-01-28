@@ -12,6 +12,9 @@ import util::Editors;
 import Visualisation::Controls;
 import Utils::MetricsInformation;
 
+private Color _firstColor = color("red");
+private Color _secondColor = color("green");
+
 private str title = "Complexity Treemap Panel (Nothing selected)";
 private set[UnitInfo] unitinfos = {};
 
@@ -69,6 +72,12 @@ public void ctp_setMethods(str label, set[loc] methods) {
 	redraw();
 }
 
+public void ctp_setColorscheme(Color first, Color second) {
+	_firstColor = first;
+	_secondColor = second;
+	redraw();
+}
+
 /**
  * Returns a computeFigure delegate to draw the complexity treemap panel.
  */
@@ -78,8 +87,8 @@ public Figure complexityTreemapPanel() {
 		Figure() {
 			nodes = [];
 			if(size(unitinfos) >0) {
-				cscale = colorScale([0..50], color("green"),color("red"));
-				nodes = [createTreemapBox(s, cscale(min(s.complexity, 50))) | s <- unitinfos ];
+				cscale = colorScale([0..25], _secondColor, _firstColor);
+				nodes = [createTreemapBox(s, cscale(min(s.complexity, 25))) | s <- unitinfos ];
 			}
 			
 			return panel(treemap(nodes), title, 0);
@@ -93,7 +102,13 @@ public Figure complexityTreemapPanel() {
  * @returns An FProperty representing the popup.
  */
 public FProperty popup(UnitInfo s) {
-	return mouseOver(box(vcat([text(s.unit.file, fontBold(true), left()), text("Complexity:\t<s.complexity>", fontItalic(true), left()), text("Lines of code:\t<s.size>", fontItalic(true), left())], vgap(5)),
+	return mouseOver(box(vcat([
+						text(s.unit.file, fontBold(true), left()), 
+						text("Complexity:\t<s.complexity>", fontItalic(true), left()), 
+						text("Lines of code:\t<s.size>", fontItalic(true), left()),
+						text(""),
+						text("ctrl+click to view source...", left())
+						], vgap(5)),
 					 fillColor(ColorPopupBackground),
 					 gap(5), startGap(true), endGap(true),
 					 resizable(false)));

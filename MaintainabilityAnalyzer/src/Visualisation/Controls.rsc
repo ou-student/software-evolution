@@ -110,7 +110,7 @@ public Figure menuBar(Figure menuItems...) {
 			hcat(menuItems, resizable(false), left()),
 			
 			// Styling
-			vresizable(false), shadow(true), height(60), left(), fillColor(ColorPLight), lineWidth(0)
+			std(vresizable(false)), shadow(true), std(height(60)), left(), fillColor(ColorPLight), lineWidth(0)
 			);
 	}
 	return space(vresizable(false), height(0));

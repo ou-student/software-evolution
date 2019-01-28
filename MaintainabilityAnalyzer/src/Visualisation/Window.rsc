@@ -15,11 +15,13 @@ import Visualisation::ProjectBrowser;
 import Visualisation::MethodInformationPanel;
 import Visualisation::ComplexityTreemapPanel;
 import Visualisation::AnalysisResults;
+import Visualisation::SettingsPanel;
 import Visualisation::Controls;
 
 import lang::java::jdt::m3::Core;
 import analysis::graphs::Graph;
 
+private int previousIndex = 0;
 private int currentIndex = 0;
 
 /**
@@ -63,31 +65,46 @@ void updateMaintainabilityRankingPanel(){
 	mrp_setResults(results);
 }
 
+void settingsPanelButtonCallback() {
+	previousIndex = currentIndex;
+	currentIndex = 3;
+} 
+
+void settingsPanelClosed(){
+	currentIndex = previousIndex;
+}
+
 /**
  * Module entry point method.
  */
 void begin() {
+	previousIndex = 0;
 	currentIndex = 0;
 
 	bool miReInit = mi_initialize(false);
 	pb_initialize(miReInit);
+	sp_initialize();
 	
 	pb_addNewLocationSelectedEventListener(onPBNewLocationSelected);
 	pb_addProjectRefreshRequestEventListener(mi_refreshProjectMetrics);
 	mip_addNewMethodSelectedEventListener(onMIPNewMethodSelected);
 	
+	sp_addColorschemeChangedEventListener(ctp_setColorscheme);
+	sp_addSettingsSavedEventListener(settingsPanelClosed);
+	
 	ctp_addMethodSelectedEventListener(onCTPMethodSelected);
 	
 	render(
 		page("Maintainance Analyzer",
-			 menuBar([]),
+			 menuBar([myButton("Settings", settingsPanelButtonCallback, vresizable(false), height(48))]),
 			 createMain(
 			 	panel(projectBrowser(), "", 0),
 			 	maintainabilityRankingPanel(),
 			 	fswitch(int(){return currentIndex;},[
 			 		welcomePanel(),
 			 		methodInformationPanel(),
-			 		complexityTreemapPanel()
+			 		complexityTreemapPanel(),
+			 		settingsPanel()
 			 	])
 				 ),
 			 footer("Copyright by A. Walgreen & E. Postma ©2019\t")
